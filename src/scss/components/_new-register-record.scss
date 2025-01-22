@@ -1,0 +1,43 @@
+.new-record {
+  margin-top: -30px;
+  padding-bottom: 30px;
+
+  [data-new-record='request'],
+  [data-new-record='result'] {
+    display: none;
+    padding: 15px;
+  }
+
+  [data-new-record="request"] {
+    background-color: lighten(govuk-colour("light-blue"), 25);
+  }
+
+  [data-new-record='result'] {
+    background-color: lighten(govuk-colour("light-green"), 25);
+  }
+
+  p {
+    margin-bottom: 10px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  [data-new-record="name"] {
+    font-family: monospace;
+    font-weight: 700;
+  }
+
+  &.new-record__mode--request {
+    [data-new-record='request'] {
+      display: block;
+    }
+  }
+
+  &.new-record__mode--result {
+    [data-new-record='result'] {
+      display: block;
+    }
+  }
+}

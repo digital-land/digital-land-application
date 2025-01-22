@@ -1,0 +1,49 @@
+
+{% extends "layouts/base.html" %}
+{% block title %}index{% endblock %}
+
+{% block content %}
+  {% if specification %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">
+          {{ specification.name }}
+        </h1>
+      </div>
+    </div>
+    <div class='govuk-grid-row'>
+      <div class='govuk-grid-column-full govuk-grid-column-two-thirds-from-desktop'>
+        <p class='govuk-body'>This is a basic application to help collect data for the {{ specification.name }} specification datasets</p>
+      </div>
+    </div>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <p class="govuk-body">The data collected can be used to seed data on the <a href="https://www.planning.data.gov.uk/" class="govuk-link">planning data platform</a></p>
+        <h2 class="govuk-heading-m">Datasets that make up this specification</h2>
+        <p class="govuk-body">The following datasets make up this specification</p>
+        <ol class="govuk-list govuk-list--number">
+          {% for dataset in specification.datasets %}
+            <li><a href="{{ url_for('dataset.dataset', dataset=dataset.dataset) }}" class="govuk-link">{{ dataset.name | capitalize }}</a></li>
+          {% endfor %}
+        </ol>
+        <h2 class="govuk-heading-m">Get started</h2>
+        {% if not config.AUTHENTICATION_ON or (config['AUTHENTICATION_ON'] and session["user"]) %}
+          <a href="{{ url_for('dataset.add_record', dataset=specification.parent_dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span>Add a new {{ specification.parent_dataset.name }}</a>
+        {% else %}
+          <a href="#" class="govuk-button">Sign in to add a </a>
+        {% endif %}
+       </div>
+    </div>
+  {% else %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-2">
+          Application not initialised
+        </h1>
+        <p class="govuk-body">The application has not be fully setup</p>
+        <p class="govuk-body">To initialise the application, run the following command:</p>
+        <p class="govuk-body">flask import-specification [specification name]</p>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

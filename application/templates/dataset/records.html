@@ -1,0 +1,108 @@
+{% extends 'layouts/dataset.html' %}
+
+{% block content_primary %}
+
+
+
+<div class="app-grid-row app-grid-row--space-between govuk-!-margin-bottom-3">
+  <div class="app-grid-column">
+    {% if session["user"] %}
+      {{
+        buttonMenu({
+          "classes": "govuk-!-margin-bottom-6",
+          "items": [
+            {
+              "element": "a",
+              "text": "Add record",
+              "href": url_for("dataset.add_record", dataset=dataset.dataset),
+            }
+          ]
+        })
+      }}
+    {% endif %}
+  </div>
+  <div class="app-grid-column">
+    <h2 class="govuk-heading-m govuk-!-margin-bottom-1">{{ dataset.records | length }} records</h2>
+  </div>
+</div>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+      {% if dataset.records | length > 0 %}
+      <section class="app-table-container">
+        <table class="app-data-table">
+          <thead class="app-data-table__head">
+            <tr class="app-data-table__row">
+              {% for field in dataset.sorted_fields() %}
+                <th scope="col" class="app-data-table__header">
+                  <span class="app-data-table__header__label">{{ field.field }}</span>
+                </th>
+              {% endfor %}
+              {% if session["user"] %}
+                <th scope="col" class="app-data-table__header app-data-table__header--ui">
+                  <span class="govuk-visually-hidden">Action</span>
+                </th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody class="app-data-table__body">
+            {% for record in dataset.records %}
+            <tr class="app-data-table__row">
+              {% for field in dataset.fields() %}
+                <td class="app-data-table__cell">{{ record.get(field.field, None)| value_or_empty_string | replace('-','&#8209;') | safe }}</td>
+              {% endfor %}
+              {% if session["user"] and not record.end_date and not history %}
+              <td class="app-data-table__cell app-data-table__cell--ui">
+                {{
+                  buttonMenu({
+                    "items": [
+                      {
+                        "element": "a",
+                        "text": "Edit record",
+                        "classes": "govuk-button--secondary",
+                        "href": "#",
+                      },
+                      {
+                        "element": "a",
+                        "text": "Archive record",
+                        "classes": "govuk-button--secondary",
+                        "href": "#",
+                      }
+                    ]
+                  })
+                }}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      <p class="govuk-hint govuk-!-margin-top-3">This dataset was last updated on {{dataset.last_updated.strftime("%d %B %Y")}}</p>
+      {% if history %}
+        <p class="govuk-body govuk-!-margin-top-3"><a href="#"">Download a csv file of the current data</a></p>
+      {% else %}
+        <p class="govuk-body govuk-!-margin-top-3"><a href="#">Download a csv file of this data</a></p>
+        {% if session["user"] %}
+          <p class="govuk-body govuk-!-margin-top-3"><a href="#">Upload a csv
+            file of updates for this dataset</a></p>
+        {% endif %}
+      {% endif %}
+      {% else %}
+        {{
+          govukInsetText({
+            'text': 'There are no records for the ' + dataset.name + ' dataset'
+          })
+        }}
+        {% if session["user"] %}
+          <p class="govuk-body govuk-!-margin-top-3"><a href="#">Upload a csv file for this dataset</a></p>
+        {% endif %}
+        {% if not config.AUTHENTICATION_ON or (config['AUTHENTICATION_ON'] and session["user"]) %}
+          <a href="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span>Add record</a>
+        {% else %}
+          <a href="#" class="govuk-button">Sign in to add a </a>
+        {% endif %}
+      {% endif %}
+  </div>
+</div>
+
+{% endblock content_primary %}

@@ -1,0 +1,10 @@
+digital_land_frontend @ git+https://github.com/digital-land/digital-land-frontend.git#egg=digital_land_frontend
+Flask
+gunicorn
+python-dotenv
+psycopg2-binary
+Flask-SQLAlchemy
+Flask-Migrate
+alembic-postgresql-enum
+Flask-WTF
+pydantic

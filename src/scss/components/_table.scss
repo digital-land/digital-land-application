@@ -1,0 +1,23 @@
+.app-table--sortable {
+
+  th {
+    white-space: nowrap;
+  }
+
+  th[data-sort] {
+    &:after {
+      font-size: 75%;
+      color: rgba($govuk-text-colour,0.5);
+    }
+  }
+
+  th[data-sort="none"]::after,
+  th[data-sort="asc"]::after {
+    content: " ▼";
+  }
+
+  th[data-sort="desc"]:after {
+    content: " ▲";
+  }
+
+}

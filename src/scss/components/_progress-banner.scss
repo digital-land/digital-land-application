@@ -1,0 +1,66 @@
+:root {
+  --progress-bar-panel-background-colour: #{govuk-colour("light-grey")};
+  --progress-bar-background-colour: #{govuk-colour("mid-grey")};
+  --progress-bar-complete-colour: #{govuk-colour("blue")};
+  --progress-bar-height: #{$govuk-gutter};
+  --progress-bar-spacing: calc(var(--progress-bar-height) / 2);
+  --progress-bar-target: 200;
+  --progress-bar-progress: 100;
+}
+
+.app-progress-banner {
+  padding: var(--progress-bar-spacing);
+  margin-bottom: govuk-spacing(6);
+  background: var(--progress-bar-panel-background-colour);
+
+  p {
+    margin-bottom: var(--progress-bar-spacing);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.app-progress__bar {
+  position: relative;
+  display: block;
+  height: var(--progress-bar-height);
+  width: 100%;
+  margin-bottom: var(--progress-bar-spacing);
+  background: var(--progress-bar-background-colour);
+  &:after {
+    display: block;
+    content: attr(count);
+    color: govuk-colour('dark-grey');
+    position: absolute;
+    right: .5em;
+    top: 50%;
+    transform: translateY(-50%);
+    @include govuk-font(16);
+    z-index: 10;
+  }
+}
+
+.app-progress__bar__completed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--progress-bar-height);
+  width: calc((var(--progress-bar-progress) / var(--progress-bar-target)) * 100%);
+  background: var(--progress-bar-complete-colour);
+  z-index: 99;
+  &:after {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(1em,-50%);
+    @include govuk-font(16, bold);
+    content: attr(count);
+    color: #fff;
+    z-index: 100;
+    text-align: left;
+    // width: calc((var(--progress-bar-progress) / var(--progress-bar-target)) * 100%);
+    min-width: 1em;
+  }
+}
