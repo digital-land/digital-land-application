@@ -15,15 +15,18 @@
   }}
 {% endif %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-three-quarters">
+  <div class="govuk-grid-column-two-thirds">
   <form method="POST" action="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}">
     <div class="govuk-form-group">
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
         {% for field in sorted_fields %}
             <div class="govuk-form-group">
-                {% if "date" in field.field %}
+              {% if "date" in field.field %}
                 {{ form[field.field] }}
+              {% elif field.field in ["description", "geometry"] %}
+                {{ form[field.field].label(class_="govuk-label") }}
+                {{ form[field.field](class_="govuk-textarea", rows="8") }}
               {% else %}
                 {{ form[field.field].label(class_="govuk-label") }}
                 {{ form[field.field](class_="govuk-input") }}
