@@ -47,9 +47,9 @@ If/when model classes are added, create database migrations:
 
 Setup the intial data for running this application.
 
-  flask specification import [specification name]
+    flask specification import [specification name]
 
 If you need to specify which dataset should be the parent dataset and entry point for adding data use the --parent flag.
 
-  flask specification import [specification name] --parent [dataset]
+    flask specification import [specification name] --parent [dataset]
   
