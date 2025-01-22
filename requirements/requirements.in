@@ -8,3 +8,6 @@ Flask-Migrate
 alembic-postgresql-enum
 Flask-WTF
 pydantic
+govuk-frontend-wtf
+geojson
+shapely

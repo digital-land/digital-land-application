@@ -63,6 +63,7 @@ def import_data(reference, parent):
     data, name = _get_specification_data(reference, specification)
     _import_specification_datasets(reference, data, name)
     _import_dataset_fields_and_categories(data)
+    _set_entity_minimum_and_maximum()
     _set_field_data_types()
     _get_and_import_category_values()
     _set_parent_dataset(parent)
@@ -142,6 +143,17 @@ def _import_dataset_fields_and_categories(data):
                 db.session.add(d)
                 print(f"Added field {field['field']} to dataset {dataset['dataset']}")
         db.session.commit()
+
+
+def _set_entity_minimum_and_maximum():
+    for dataset in Dataset.query.all():
+        url = f"{DIGTAL_LAND_DB_URL}/dataset.json?dataset__exact={dataset.dataset}&_shape=array"
+        data = _get(url)
+        if data and len(data) > 0:
+            dataset.entity_minimum = data[0]["entity_minimum"]
+            dataset.entity_maximum = data[0]["entity_maximum"]
+            db.session.add(dataset)
+    db.session.commit()
 
 
 def _get_specification_data(reference, specification):

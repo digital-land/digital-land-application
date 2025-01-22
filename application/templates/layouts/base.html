@@ -53,6 +53,12 @@
         <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide menu" hidden>Menu</button>
         <ul id="navigation" class="govuk-header__navigation-list">
           <li class="govuk-header__navigation-item">
+            <a href="{{ url_for('main.index') }}" class="govuk-header__link">Home</a>
+          </li>
+          <li class="govuk-header__navigation-item">
+            <a href="{{ url_for('explore.index') }}" class="govuk-header__link">Explore data</a>
+          </li>
+          <li class="govuk-header__navigation-item">
             {% if not config.AUTHENTICATION_ON or session["user"] %}
             <a class="govuk-header__link" href="#">
               Sign out

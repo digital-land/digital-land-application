@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, url_for
+from flask import Blueprint, render_template, url_for, abort
+from application.forms import FormBuilder
 
-from application.database.models import Dataset
+from application.database.models import Dataset, Record
 
 ds = Blueprint("dataset", __name__, template_folder="templates", url_prefix="/dataset")
 
@@ -34,7 +35,9 @@ def dataset(dataset):
 def add_record(dataset):
 
     ds = Dataset.query.get(dataset)
-
+    if ds is None:
+        return abort(404)
+    
     breadcrumbs = {
         "items": [
             {"text": "Home", "href": url_for("main.index")},
@@ -45,6 +48,46 @@ def add_record(dataset):
             {"text": "Add record"},
         ]
     }
+    
+    builder = FormBuilder(ds.fields)
+    form = builder.build()
+    form_fields = builder.form_fields()
+
+    if form.validate_on_submit():
+        last_record = (
+            db.session.query(Record)
+            .filter_by(dataset_id=dataset.dataset)
+            .order_by(Record.row_id.desc())
+            .first()
+        )
+        next_id = last_record.row_id + 1 if last_record else 0
+        entity = (
+            last_record.entity + 1
+            if (last_record is not None and last_record.entity is not None)
+            else dataset.entity_minimum
+        )
+        if not (dataset.entity_minimum <= entity <= dataset.entity_maximum):
+            flash(
+                f"entity id {entity} is outside of range {dataset.entity_minimum} to {dataset.entity_maximum}"
+            )
+            return redirect(url_for("main.dataset", id=dataset.dataset))
+
+        if "csrf_token" in data:
+            del data["csrf_token"]
+
+        record = Record(row_id=next_id, entity=entity)
+        extra_data = {}
+        for key, val in data.items():
+            if hasattr(record, key):
+                setattr(record, key, val)
+            else:
+                extra_data[key] = val
+        if extra_data:
+            record.data = extra_data
+
+        dataset.records.append(record)
+        db.session.add(dataset)
+        db.session.commit()
 
     return render_template(
         "dataset/add-record.html", dataset=ds, breadcrumbs=breadcrumbs

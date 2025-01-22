@@ -63,6 +63,8 @@ class Dataset(DateModel):
         ForeignKey("specification.specification"), nullable=True
     )
     is_geography: Mapped[bool] = mapped_column(default=False)
+    entity_minimum: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
+    entity_maximum: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
     specification: Mapped[Optional["Specification"]] = relationship(
         "Specification",
         back_populates="datasets",
@@ -112,6 +114,10 @@ class Record(DateModel):
     id: Mapped[uuid.uuid4] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    entity: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
+    reference: Mapped[str] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=True)
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
     dataset_dataset: Mapped[str] = mapped_column(ForeignKey("dataset.dataset"))
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
