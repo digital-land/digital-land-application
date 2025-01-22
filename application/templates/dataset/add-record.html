@@ -1,12 +1,98 @@
-{% extends "layouts/base.html" %}
+{% extends 'layouts/base.html' %}
 
-{% block content_primary %}
+{% block content %}
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-three-quarters">
-        <h1 class="govuk-heading-l govuk-!-margin-bottom-2">
-            Add record
-        </h1>
-        <p class="govuk-body">Add a new record to the {{ dataset.name }} dataset</p>
-    </div>
+  <div class="govuk-grid-column-three-quarters">
+    <span class="govuk-caption-l">{{ dataset.name }}</span>
+    <h1 class="govuk-heading-l">Add a record</h1>
+  </div>
 </div>
-{% endblock content_primary %}
+{% if error_list %}
+  {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    })
+  }}
+{% endif %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+  <form method="POST" action="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}">
+    <div class="govuk-form-group">
+      {{ form.hidden_tag() }}
+      <fieldset class="govuk-fieldset">
+        {% for field in sorted_fields %}
+            <div class="govuk-form-group">
+                {% if "date" in field.field %}
+                {{ form[field.field] }}
+              {% else %}
+                {{ form[field.field].label(class_="govuk-label") }}
+                {{ form[field.field](class_="govuk-input") }}
+              {% endif %}
+              {% if form[field.field].errors %}
+                  <div class="text-danger">
+                      {% for error in form[field.field].errors %}
+                          <p>{{ error }}</p>
+                      {% endfor %}
+                  </div>
+              {% endif %}
+          </div>
+      {% endfor %}
+    </fieldset>
+    </div>
+    {{
+      govukButton({
+        "text": "Add record",
+        "type": "submit"
+      })
+    }}
+  </form>
+</div>
+{% endblock content %}
+
+{% block digitalLandScripts -%}
+  {{ super() }}
+  <script>
+    (function () {
+
+      // configuration object
+      let config = {
+        inputSelector: '.govuk-input#name',
+        outputSelector: '.govuk-input#reference'
+      }
+
+      // slugify the value passed in and return it
+      function slugify(input) {
+          if (!input)
+              return '';
+          // make lower case and trim
+          var slug = input.toLowerCase().trim();
+          // remove accents from charaters
+          slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          // replace invalid chars with spaces
+          slug = slug.replace(/[^a-z0-9\s-]/g, ' ').trim();
+          // replace multiple spaces or hyphens with a single hyphen
+          slug = slug.replace(/[\s-]+/g, '-');
+          return slug;
+      }
+
+      // initialise this component
+      function init () {
+
+        const $input = document.querySelector(config.inputSelector);
+        const $output = document.querySelector(config.outputSelector);
+
+        if ($input != null && $output != null) {
+          $input.onkeyup = () => {
+            $output.value = slugify($input.value);
+          };
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init)
+      } else {
+        init()
+      }
+    })()
+  </script>
+{%- endblock %}

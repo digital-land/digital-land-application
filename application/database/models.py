@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from typing import List, Optional
+from functools import total_ordering
 
 from sqlalchemy import UUID, Date, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -87,7 +88,7 @@ class Dataset(DateModel):
         return self.dataset.replace("-", " ")
 
 
-# @total_ordering
+@total_ordering
 class Field(DateModel):
     __tablename__ = "field"
 
@@ -106,6 +107,51 @@ class Field(DateModel):
     category: Mapped[Optional["Category"]] = relationship(
         "Category",
     )
+
+    def __eq__(self, other):
+        return self.field == other.field
+
+    def __lt__(self, other):
+        if self.field == "entity":
+            return True
+        if self.field == "name" and other.field != "entity":
+            return True
+        if self.field == "prefix" and other.field not in ["entity", "name"]:
+            return True
+        if self.field == "reference" and other.field not in [
+            "entity",
+            "name",
+            "prefix",
+        ]:
+            return True
+
+        if self.field not in [
+            "entity",
+            "name",
+            "prefix",
+            "reference",
+        ] and other.field not in ["entity", "name", "prefix", "reference"]:
+            if self.datatype == "datetime" and other.datatype != "datetime":
+                return False
+
+            if self.datatype == "datetime" and other.datatype == "datetime":
+                prefix = self.field.split("-")[0]
+                other_prefix = other.field.split("-")[0]
+                if prefix == "entry" and other_prefix != "entry":
+                    return True
+                if prefix == "start" and other_prefix != "entry":
+                    return True
+                if prefix == "end" and other_prefix not in ["entry", "start"]:
+                    return False
+
+            if self.datatype != "datetime" and other.datatype != "datetime":
+                return self.field < other.field
+
+            if self.datatype != "datetime" and other.datatype == "datetime":
+                return True
+
+        return False
+
 
 
 class Record(DateModel):

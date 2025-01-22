@@ -1,6 +1,7 @@
 """The app module, containing the app factory function."""
 
 from flask import Flask, render_template
+from govuk_frontend_wtf.main import WTFormsHelpers
 
 from application.database.models import *  # noqa - import all models for alembic
 
@@ -59,11 +60,13 @@ def register_templates(app):
                 {
                     "govuk_frontend_jinja": PackageLoader("govuk_frontend_jinja"),
                     "digital-land-frontend": PackageLoader("digital_land_frontend"),
+                    "govuk_frontend_wtf": PackageLoader("govuk_frontend_wtf"),
                 }
             ),
         ]
     )
     app.jinja_loader = multi_loader
+    WTFormsHelpers(app)
 
 
 def register_filters(app):

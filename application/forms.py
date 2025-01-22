@@ -47,8 +47,10 @@ class FormBuilder:
         "multipolygon": TextAreaField,
     }
     
-    def __init__(self, fields, require_reference=True):
-        skip_fields = {"entity", "end-date", "entry-date", "prefix"}
+    def __init__(self, fields, require_reference=True, additional_skip_fields=None):
+        skip_fields = {"entity", "prefix", "entry-date", "start-date", "end-date"}
+        if additional_skip_fields:
+            skip_fields.update(additional_skip_fields)
         self.fields = []
         self.require_reference = require_reference
         for field in fields:
@@ -86,7 +88,7 @@ class FormBuilder:
 
         return TheForm()
 
-    def form_fields(self):
+    def sorted_fields(self):
         return sorted(self.fields)
 
 
