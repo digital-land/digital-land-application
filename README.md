@@ -1,6 +1,9 @@
-===============================
-digital-land-app-template
-===============================
+## Digital land application
+
+Intended to be used for basic data entry for datasets used in a given specification. 
+
+For most specifications a dataset which has no foreign keys from other datasets in the specification is assumed to the 'parent' dataset 
+and will normally be the main entry point for entering data. This behaviour can be over ridden during appilication setup.
 
 
 #### Prerequisites
@@ -37,3 +40,16 @@ If/when model classes are added, create database migrations:
     flask db migrate
 
     flask db upgrade
+
+
+
+#### Initial application for a given specification
+
+Setup the intial data for running this application.
+
+  flask specification import [specification name]
+
+If you need to specify which dataset should be the parent dataset and entry point for adding data use the --parent flag.
+
+  flask specification import [specification name] --parent [dataset]
+  
