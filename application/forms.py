@@ -10,7 +10,7 @@ from govuk_frontend_wtf.wtforms_widgets import GovDateInput
 from wtforms import DateField, StringField, TextAreaField, URLField, SelectField
 from wtforms.validators import URL, DataRequired, ValidationError, Regexp
 
-from application.database.models import CategoryValue
+from application.database.models import CategoryValue, Organisation
 
 
 
@@ -87,6 +87,14 @@ class FormBuilder:
                     CategoryValue.category_reference == field.category_reference
                 ).all()
                 choices = [(cv.reference, cv.name) for cv in category_values]
+                setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
+                continue
+
+            # Special case for organization fields
+            if field.field == "organisation":
+                organisations = Organisation.query.order_by(Organisation.name).all()
+                choices = [("", "Select an organisation")]
+                choices.extend([(f"{org.prefix}:{org.reference}", org.name) for org in organisations])
                 setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
                 continue
 

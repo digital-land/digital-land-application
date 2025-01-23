@@ -100,5 +100,14 @@
         init()
       }
     })()
+    
   </script>
 {%- endblock %}
+{% block bodyScriptsEnd %}
+  <script type="text/javascript" src="{{ assetPath | default('/static') }}/javascripts/vendor/accessible-autocomplete.min.js"></script>
+  <script>
+    accessibleAutocomplete.enhanceSelectElement({
+      selectElement: document.querySelector('#organisation')
+    })
+  </script>
+{% endblock %}
