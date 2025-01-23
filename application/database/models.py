@@ -95,8 +95,10 @@ class Field(DateModel):
     field: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[Optional[str]] = mapped_column(Text)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    cardinality: Mapped[Optional[str]] = mapped_column(Text)
+    parent_field: Mapped[Optional[str]] = mapped_column(Text)
     category_reference: Mapped[Optional[str]] = mapped_column(
-        Text, ForeignKey("category.reference")
+        Text, ForeignKey("category.reference"), nullable=True
     )
     datatype: Mapped[Optional[str]] = mapped_column(Text)
     datasets: Mapped[List["Dataset"]] = relationship(

@@ -21,19 +21,23 @@
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
         {% for field in sorted_fields %}
+            {% set current_field = form[field.field] %}
             <div class="govuk-form-group">
-              {% if "date" in field.field %}
-                {{ form[field.field] }}
-              {% elif field.field in ["description", "geometry"] %}
-                {{ form[field.field].label(class_="govuk-label") }}
-                {{ form[field.field](class_="govuk-textarea", rows="8") }}
+              {% if current_field.type == "DateField" %}
+                {{ current_field }}
+              {% elif current_field.type == "TextAreaField" %}
+                {{ current_field.label(class_="govuk-label") }}
+                {{ current_field(class_="govuk-textarea", rows="8") }}
+              {% elif current_field.type == "SelectField" %}
+                {{ current_field.label(class_="govuk-label") }}
+                {{ current_field(class_="govuk-select") }}
               {% else %}
-                {{ form[field.field].label(class_="govuk-label") }}
-                {{ form[field.field](class_="govuk-input") }}
+                {{ current_field.label(class_="govuk-label") }}
+                {{ current_field(class_="govuk-input") }}
               {% endif %}
-              {% if form[field.field].errors %}
+              {% if current_field.errors %}
                   <div class="text-danger">
-                      {% for error in form[field.field].errors %}
+                      {% for error in current_field.errors %}
                           <p>{{ error }}</p>
                       {% endfor %}
                   </div>

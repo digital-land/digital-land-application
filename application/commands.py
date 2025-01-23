@@ -31,9 +31,9 @@ CATEGORY_VALUES_URL = (
 specification_cli = AppGroup("specification")
 
 
-def _get_category_datasets():
-    print("Getting category datasets")
-    return _get(CATEGORY_DATASETS_URL)
+# def _get_category_datasets():
+#     print("Getting category datasets")
+#     return _get(CATEGORY_DATASETS_URL)
 
 
 def _get_specification(specification):
@@ -52,7 +52,7 @@ def import_data(reference, parent):
     if len(spec) > 0:
         print(
             "A specification has already been imported. Another one can't be imported."
-        )
+        )   
         return sys.exit(1)
 
     specification = _get_specification(reference)
@@ -62,9 +62,9 @@ def import_data(reference, parent):
 
     data, name = _get_specification_data(reference, specification)
     _import_specification_datasets(reference, data, name)
-    _import_dataset_fields_and_categories(data)
     _set_entity_minimum_and_maximum()
-    _set_field_data_types()
+    _import_dataset_fields(data)
+    _set_field_attributes()
     _get_and_import_category_values()
     _set_parent_dataset(parent)
     _check_for_geography_datasets()
@@ -119,7 +119,7 @@ def _import_specification_datasets(reference, data, name):
     db.session.commit()
 
 
-def _import_dataset_fields_and_categories(data):
+def _import_dataset_fields(data):
     print("Importing fields")
     for dataset in data:
         d = Dataset.query.get(dataset["dataset"])
@@ -144,6 +144,19 @@ def _import_dataset_fields_and_categories(data):
                 print(f"Added field {field['field']} to dataset {dataset['dataset']}")
         db.session.commit()
 
+def _set_field_attributes():
+    for field in Field.query.all():
+        field_url = f"{FIELDS_URL}&field__exact={field.field}"
+        field_data = _get(field_url)
+        if field_data and len(field_data) > 0:
+            field.name = field_data[0]["name"]
+            field.cardinality = field_data[0]["cardinality"]
+            field.datatype = field_data[0]["datatype"]
+            typology = field_data[0]["typology"]
+            if typology == "category":
+                field.parent_field = field_data[0]["parent_field"]
+            db.session.add(field)
+    db.session.commit()
 
 def _set_entity_minimum_and_maximum():
     for dataset in Dataset.query.all():
@@ -162,16 +175,6 @@ def _get_specification_data(reference, specification):
     data = json.loads(data_str)
     return data, name
 
-
-def _set_field_data_types():
-    for field in Field.query.all():
-        url = f"{FIELDS_URL}&field__exact={field.field}&_shape=object"
-        data = _get(url)
-        if data and len(data) > 0:
-            datatype = data[0]["datatype"]
-            field.datatype = datatype
-            db.session.add(field)
-            db.session.commit()
 
 
 def _get_and_import_category_values():
