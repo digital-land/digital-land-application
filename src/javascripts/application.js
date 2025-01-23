@@ -1,6 +1,7 @@
 /* global fetch, turf */
 import SelectOrNew from './modules/select-or-new'
 import MultiSelect from './modules/multi-select'
+import Slugify from './modules/slugify'
 
 function getBoundingBox(features, units) {
   const _units = units || 1
@@ -20,4 +21,5 @@ window.dptp = {
   getBoundingBox: getBoundingBox,
   MultiSelect: MultiSelect,
   SelectOrNew: SelectOrNew,
+  Slugify: Slugify
 }
