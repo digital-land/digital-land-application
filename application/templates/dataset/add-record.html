@@ -3,8 +3,8 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-three-quarters">
-    <span class="govuk-caption-l">{{ dataset.name }}</span>
-    <h1 class="govuk-heading-l">Add a record</h1>
+    <span class="govuk-caption-l">{{ dataset.name | capitalize }}</span>
+    <h1 class="govuk-heading-l">Add record</h1>
   </div>
 </div>
 {% if error_list %}
@@ -21,7 +21,7 @@
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
         {% for field in sorted_fields %}
-            {% set current_field = form[field.field] %}
+            {% set current_field = form[field.name] %}
             <div class="govuk-form-group">
               {% if current_field.type == "DateField" %}
                 {{ current_field }}

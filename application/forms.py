@@ -81,33 +81,33 @@ class FormBuilder:
                     CategoryValue.category_reference == field.category_reference
                 ).all()
                 choices = [(cv.reference, cv.name) for cv in category_values]
-                setattr(TheForm, field.field, SelectField(choices=choices))
+                setattr(TheForm, field.name, SelectField(choices=choices))
                 continue
 
             form_field = self.field_types.get(field.datatype)
             if form_field is not None:
                 match field.datatype:
                     case "curie":
-                        setattr(TheForm, field.field, form_field(validators=[curie_validator]))
+                        setattr(TheForm, field.name, form_field(validators=[curie_validator]))
                     case "string" | "text":
-                        setattr(TheForm, field.field, form_field())
+                        setattr(TheForm, field.name, form_field())
                     case "url":
-                        setattr(TheForm, field.field, form_field(validators=[URL()]))
+                        setattr(TheForm, field.name , form_field(validators=[URL()]))
                     case "datetime":
-                        setattr(TheForm, field.field, form_field(widget=GovDateInput()))
+                        setattr(TheForm, field.name, form_field(widget=GovDateInput()))
                     case "multipolygon":
-                        setattr(TheForm, field.field, form_field(validators=[geometry_check]))
+                        setattr(TheForm, field.name, form_field(validators=[geometry_check]))
                     case "point":
-                        setattr(TheForm, field.field, form_field(validators=[point_check]))
+                        setattr(TheForm, field.name, form_field(validators=[point_check]))
                     case _:
                         if field.field == "name" or (
                             field.field == "reference" and self.require_reference
                         ):
                             setattr(
-                                TheForm, field.field, form_field(validators=[DataRequired()])
+                                TheForm, field.name, form_field(validators=[DataRequired()])
                             )
                         else:
-                            setattr(TheForm, field.field, form_field())
+                            setattr(TheForm, field.name, form_field())
 
         return TheForm()
 
