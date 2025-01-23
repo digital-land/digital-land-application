@@ -13,6 +13,7 @@ from application.database.models import (
     Record,
     Specification,
     dataset_field,
+    Organisation,
 )
 from application.extensions import db
 
@@ -60,14 +61,30 @@ def import_data(reference, parent):
         print(f"Specification {reference} not found")
         return
 
-    data, name = _get_specification_data(reference, specification)
-    _import_specification_datasets(reference, data, name)
-    _set_entity_minimum_and_maximum()
-    _import_dataset_fields(data)
-    _set_field_attributes()
-    _get_and_import_category_values()
-    _set_parent_dataset(parent)
-    _check_for_geography_datasets()
+    try:
+        data, name = _get_specification_data(reference, specification)
+        
+        # Start transaction
+        db.session.begin_nested()
+        
+        _import_specification_datasets(reference, data, name)
+        _set_entity_minimum_and_maximum()
+        _import_dataset_fields(data)
+        _set_field_attributes()
+        _get_and_import_category_values()
+        _set_parent_dataset(parent)
+        _check_for_geography_datasets()
+        _import_organisations()
+        
+        # If we get here, commit the transaction
+        db.session.commit()
+        print("Successfully imported specification data")
+        
+    except Exception as e:
+        # If anything fails, rollback the transaction
+        db.session.rollback()
+        print(f"Error importing specification data: {str(e)}")
+        return sys.exit(1)
 
 
 @specification_cli.command("clear")
@@ -80,6 +97,7 @@ def clear_data():
     db.session.query(Category).delete()
     db.session.query(Dataset).delete()
     db.session.query(Specification).delete()
+    db.session.query(Organisation).delete()
     db.session.commit()
 
 
@@ -246,4 +264,18 @@ def _check_for_geography_datasets():
             print(f"Setting {dataset.dataset} as geography dataset")
             dataset.is_geography = True
             db.session.add(dataset)
+    db.session.commit()
+
+def _import_organisations():
+    url = f"{DIGTAL_LAND_DB_URL}/organisation.json?_shape=array&_size=max"
+    organisations = _get(url)
+    for organisation in organisations:
+        la_type = organisation.get("local_authority_type") if organisation.get("local_authority_type") else None
+        org = Organisation(
+            prefix=organisation["prefix"],
+            reference=organisation["reference"],
+            name=organisation["name"],
+            local_authority_type=la_type
+            )
+        db.session.add(org)
     db.session.commit()

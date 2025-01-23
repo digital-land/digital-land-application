@@ -189,3 +189,11 @@ class CategoryValue(DateModel):
     name: Mapped[str] = mapped_column(Text)
     category_reference: Mapped[str] = mapped_column(ForeignKey("category.reference"))
     category: Mapped["Category"] = relationship("Category", back_populates="values")
+
+class Organisation(DateModel):
+    __tablename__ = "organisation"
+
+    prefix: Mapped[str] = mapped_column(Text, primary_key=True)
+    reference: Mapped[str] = mapped_column(Text, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    local_authority_type: Mapped[Optional[str]] = mapped_column(Text)
