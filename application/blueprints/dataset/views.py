@@ -14,11 +14,7 @@ def dataset(dataset):
     breadcrumbs = {
         "items": [
             {"text": "Home", "href": url_for("main.index")},
-            {
-                "text": ds.name.capitalize(),
-                "href": url_for("dataset.dataset", dataset=ds.dataset),
-            },
-            {"text": "Records"},
+            {"text": ds.name.capitalize(),}
         ]
     }
 
