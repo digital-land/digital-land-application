@@ -50,9 +50,9 @@ def add_record(dataset):
         ]
     }
 
-    # check if there are additional fields to skip. if they are references 
-    # rom another dataset to the parent dataset. We can do that by checking 
-    # if the field name is the same as the reference for the other dataset
+    # check if there are additional fields to skip. for example if there are references 
+    # from another dataset to the parent dataset. We can do that by checking 
+    # if the field name is the same as the reference for another dataset
     additional_skip_fields = []
     if ds.parent is None:
         other_datasets = [dataset.dataset for dataset in Dataset.query.filter(Dataset.dataset != ds.dataset).all()]
@@ -62,7 +62,7 @@ def add_record(dataset):
 
     builder = FormBuilder(ds.fields, additional_skip_fields=additional_skip_fields)
     form = builder.build()
-    sorted_fields = builder.sorted_fields()
+
 
     if form.validate_on_submit():
         data = form.data
@@ -104,5 +104,5 @@ def add_record(dataset):
         return redirect(url_for("dataset.dataset", dataset=ds.dataset))
 
     return render_template(
-        "dataset/add-record.html", dataset=ds, breadcrumbs=breadcrumbs, form=form, sorted_fields=sorted_fields
-    )
+        "dataset/add-record.html", dataset=ds, breadcrumbs=breadcrumbs, form=form
+        )

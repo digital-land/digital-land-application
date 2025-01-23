@@ -46,6 +46,15 @@ def point_check(form, field):
 
 
 
+class DynamicForm(FlaskForm):
+    
+    def __init__(self, sorted_fields, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field_order = sorted_fields
+
+    def ordered_fields(self):
+        for field in self.field_order:
+            yield getattr(self, field.field)
 
 class FormBuilder:
     
@@ -70,10 +79,7 @@ class FormBuilder:
                 self.fields.append(field)
 
     def build(self):
-        
-        class TheForm(FlaskForm):
-            pass
-
+        TheForm = DynamicForm
         for field in self.fields:
             if field.category_reference is not None:
                 # Get category values for this category reference
@@ -81,35 +87,36 @@ class FormBuilder:
                     CategoryValue.category_reference == field.category_reference
                 ).all()
                 choices = [(cv.reference, cv.name) for cv in category_values]
-                setattr(TheForm, field.name, SelectField(choices=choices))
+                setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
                 continue
 
             form_field = self.field_types.get(field.datatype)
             if form_field is not None:
                 match field.datatype:
                     case "curie":
-                        setattr(TheForm, field.name, form_field(validators=[curie_validator]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[curie_validator]))
                     case "string" | "text":
-                        setattr(TheForm, field.name, form_field())
+                        setattr(TheForm, field.field, form_field(label=field.name))
                     case "url":
-                        setattr(TheForm, field.name , form_field(validators=[URL()]))
+                        setattr(TheForm, field.field , form_field(label=field.name, validators=[URL()]))
                     case "datetime":
-                        setattr(TheForm, field.name, form_field(widget=GovDateInput()))
+                        setattr(TheForm, field.field, form_field(label=field.name, widget=GovDateInput()))
                     case "multipolygon":
-                        setattr(TheForm, field.name, form_field(validators=[geometry_check]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[geometry_check]))
                     case "point":
-                        setattr(TheForm, field.name, form_field(validators=[point_check]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[point_check]))
                     case _:
                         if field.field == "name" or (
                             field.field == "reference" and self.require_reference
                         ):
                             setattr(
-                                TheForm, field.name, form_field(validators=[DataRequired()])
+                                TheForm, field.field, form_field(label=field.name, validators=[DataRequired()])
                             )
                         else:
-                            setattr(TheForm, field.name, form_field())
-
-        return TheForm()
+                            setattr(TheForm, field.field, form_field(label=field.name))
+        
+        form = TheForm(sorted_fields=self.sorted_fields())
+        return form
 
     def sorted_fields(self):
         return sorted(self.fields)

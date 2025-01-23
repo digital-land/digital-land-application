@@ -20,24 +20,23 @@
     <div class="govuk-form-group">
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
-        {% for field in sorted_fields %}
-            {% set current_field = form[field.name] %}
+        {% for field in form.ordered_fields() %}
             <div class="govuk-form-group">
-              {% if current_field.type == "DateField" %}
-                {{ current_field }}
-              {% elif current_field.type == "TextAreaField" %}
-                {{ current_field.label(class_="govuk-label") }}
-                {{ current_field(class_="govuk-textarea", rows="8") }}
-              {% elif current_field.type == "SelectField" %}
-                {{ current_field.label(class_="govuk-label") }}
-                {{ current_field(class_="govuk-select") }}
+              {% if field.type == "DateField" %}
+                {{ field }}
+              {% elif field.type == "TextAreaField" %}
+                {{ field.label(class_="govuk-label") }}
+                {{ field(class_="govuk-textarea", rows="8") }}
+              {% elif field.type == "SelectField" %}
+                {{ field.label(class_="govuk-label") }}
+                {{ field(class_="govuk-select") }}
               {% else %}
-                {{ current_field.label(class_="govuk-label") }}
-                {{ current_field(class_="govuk-input") }}
+                {{ field.label(class_="govuk-label") }}
+                {{ field(class_="govuk-input") }}
               {% endif %}
-              {% if current_field.errors %}
+              {% if field.errors %}
                   <div class="text-danger">
-                      {% for error in current_field.errors %}
+                      {% for error in field.errors %}
                           <p>{{ error }}</p>
                       {% endfor %}
                   </div>
