@@ -91,11 +91,22 @@ class FormBuilder:
                 continue
 
             # Special case for organization fields
-            if field.field == "organisation":
+            if field.field in ["organisation", "organisations"]:
                 organisations = Organisation.query.order_by(Organisation.name).all()
                 choices = [("", "Select an organisation")]
                 choices.extend([(f"{org.prefix}:{org.reference}", org.name) for org in organisations])
-                setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
+                
+                if field.cardinality == "n":
+                    # For multi-select, use a StringField that will be enhanced by JS
+                    field_obj = StringField(
+                        label=field.name,
+                        validators=[Optional()],
+                        render_kw={"data-multi-select": "input", "choices": choices[1:]}
+                    )
+                    setattr(TheForm, field.field, field_obj)
+                else:
+                    # Single select uses regular SelectField
+                    setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
                 continue
 
             form_field = self.field_types.get(field.datatype)

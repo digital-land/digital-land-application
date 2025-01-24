@@ -19,6 +19,5 @@ function getBoundingBox(features, units) {
 window.dptp = {
   getBoundingBox: getBoundingBox,
   MultiSelect: MultiSelect,
-  SelectOrNew: SelectOrNew,
   Slugify: Slugify
 }

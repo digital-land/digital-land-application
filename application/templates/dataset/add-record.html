@@ -1,5 +1,10 @@
 {% extends 'layouts/base.html' %}
 
+{% block head %}
+  {{ super() }}
+  <script type="text/javascript" src="{{ assetPath | default('/static') }}/javascripts/vendor/accessible-autocomplete.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-three-quarters">
@@ -22,17 +27,35 @@
       <fieldset class="govuk-fieldset">
         {% for field in form.ordered_fields() %}
             <div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
-              {% if field.type == "DateField" %}
+              {% if field.render_kw and field.render_kw.get('choices') %}
+                <div class="app-organisation-select" data-module="multi-select">
+                  <div class="govuk-form-group" data-multi-select="form-group">
+                    {{ field.label(class="govuk-label") }}
+                    {{ field(class="govuk-input") }}
+                  </div>
+                  <div class="app-hidden">
+                    {% set choices = field.render_kw.get('choices') %}
+                    <select name="organisation_select" id="organisation_select" data-multi-select="select">
+                      {% for choice in choices %}
+                        <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              {% elif field.type == "DateField" %}
                 {{ field }}
               {% elif field.type == "TextAreaField" %}
-                {{ field.label(class_="govuk-label") }}
-                {{ field(class_="govuk-textarea", rows="8") }}
+                {{ field.label(class="govuk-label") }}
+                {{ field(class="govuk-textarea", rows="8") }}
+              {% elif field.type == "SelectField" and field.name == "organisation" %}
+                {{ field.label(class="govuk-label") }}
+                {{ field(class="govuk-select") }}
               {% elif field.type == "SelectField" %}
-                {{ field.label(class_="govuk-label") }}
-                {{ field(class_="govuk-select") }}
+                {{ field.label(class="govuk-label") }}
+                {{ field(class="govuk-select") }}
               {% else %}
-                {{ field.label(class_="govuk-label") }}
-                {{ field(class_="govuk-input") }}
+                {{ field.label(class="govuk-label") }}
+                {{ field(class="govuk-input") }}
               {% endif %}
               {% if field.errors %}
                   <div>
@@ -59,15 +82,21 @@
   {{ super() }}
   <script>
     new window.dptp.Slugify()
+    // Initialize multi-select for organization fields with cardinality n
+    document.querySelectorAll('[data-module="multi-select"]').forEach(function($module) {
+      new window.dptp.MultiSelect($module).init()
+    })
+
+    // Initialize accessible-autocomplete for single organization field
+    var singleSelectOrg = document.querySelector('#organisation.govuk-select')
+    if (singleSelectOrg) {
+      accessibleAutocomplete.enhanceSelectElement({
+        selectElement: singleSelectOrg
+      })
+    }
   </script>
 {%- endblock %}
 
 {% block bodyScriptsEnd %}
   {{ super() }}
-  <script type="text/javascript" src="{{ assetPath | default('/static') }}/javascripts/vendor/accessible-autocomplete.min.js"></script>
-  <script>
-    accessibleAutocomplete.enhanceSelectElement({
-      selectElement: document.querySelector('#organisation')
-    })
-  </script>
 {% endblock %}
