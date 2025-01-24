@@ -168,7 +168,8 @@ MultiSelect.prototype.setupSelectedPanel = function () {
 
 MultiSelect.prototype.setUpTypeAhead = function () {
   const labelText = this.$formGroup.querySelector('label').textContent
-  this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id)
+  const hintText = this.$input.dataset.hint || 'Start typing to see suggestions'
+  this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id, hintText)
   this.$module.append(this.$typeAheadContainer)
 
   this.initAccessibleAutocomplete(this.$typeAheadContainer)

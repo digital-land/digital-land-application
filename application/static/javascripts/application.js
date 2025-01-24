@@ -5,26 +5,28 @@
 
   const utils = {};
 
-  utils.createTypeAheadContainer = function (labelText, id) {
-    // create a label element
+  utils.createTypeAheadContainer = function (labelText, id, hintText) {
+    const $container = document.createElement('div');
+    $container.classList.add('govuk-form-group');
+
     const $label = document.createElement('label');
     $label.classList.add('govuk-label');
-    $label.htmlFor = id + '-typeAhead';
+    $label.setAttribute('for', id + '-typeAhead');
     $label.textContent = labelText;
+    $container.appendChild($label);
 
-    // create the autocomplete container
+    if (hintText) {
+      const $hint = document.createElement('div');
+      $hint.classList.add('govuk-hint');
+      $hint.textContent = hintText;
+      $container.appendChild($hint);
+    }
+
     const $autocompleteContainer = document.createElement('div');
     $autocompleteContainer.classList.add('autocomplete-container');
-    // this.$autocompleteContainer.id = 'my-autocomplete-container'
+    $container.appendChild($autocompleteContainer);
 
-    // create form-group
-    const $formGroup = document.createElement('div');
-    $formGroup.classList.add('govuk-form-group');
-
-    $formGroup.appendChild($label);
-    $formGroup.appendChild($autocompleteContainer);
-
-    return $formGroup
+    return $container
   };
 
   utils.getSelectOptions = function ($select) {
@@ -62,6 +64,7 @@
   function MultiSelect ($module) {
     this.$module = $module;
   }
+
 
   MultiSelect.prototype.init = function (params) {
     this.setupOptions(params);
@@ -225,7 +228,8 @@
 
   MultiSelect.prototype.setUpTypeAhead = function () {
     const labelText = this.$formGroup.querySelector('label').textContent;
-    this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id);
+    const hintText = this.$input.dataset.hint || 'Start typing to see suggestions';
+    this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id, hintText);
     this.$module.append(this.$typeAheadContainer);
 
     this.initAccessibleAutocomplete(this.$typeAheadContainer);

@@ -6,6 +6,7 @@ function MultiSelect ($module) {
   this.$module = $module
 }
 
+
 MultiSelect.prototype.init = function (params) {
   this.setupOptions(params)
   // get the original form field that needs to be kept updated
@@ -168,7 +169,8 @@ MultiSelect.prototype.setupSelectedPanel = function () {
 
 MultiSelect.prototype.setUpTypeAhead = function () {
   const labelText = this.$formGroup.querySelector('label').textContent
-  this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id)
+  const hintText = this.$input.dataset.hint || 'Start typing to see suggestions'
+  this.$typeAheadContainer = utils.createTypeAheadContainer(labelText, this.$hiddenSelect.id, hintText)
   this.$module.append(this.$typeAheadContainer)
 
   this.initAccessibleAutocomplete(this.$typeAheadContainer)

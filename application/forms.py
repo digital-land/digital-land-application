@@ -86,22 +86,37 @@ class FormBuilder:
                 category_values = CategoryValue.query.filter(
                     CategoryValue.category_reference == field.category_reference
                 ).all()
-                choices = [(cv.reference, cv.name) for cv in category_values]
-                setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
-                continue
-
-            # Special case for organization fields
-            if field.field in ["organisation", "organisations"]:
-                organisations = Organisation.query.order_by(Organisation.name).all()
-                choices = [("", "Select an organisation")]
-                choices.extend([(f"{org.prefix}:{org.reference}", org.name) for org in organisations])
+                choices = [("", "")]
+                choices.extend([(cv.reference, cv.name) for cv in category_values])
                 
                 if field.cardinality == "n":
                     # For multi-select, use a StringField that will be enhanced by JS
                     field_obj = StringField(
                         label=field.name,
                         validators=[Optional()],
-                        render_kw={"data-multi-select": "input", "choices": choices[1:]}
+                        render_kw={"data-multi-select": "input", "choices": choices}
+                    )
+                    setattr(TheForm, field.field, field_obj)
+                else:
+                    # Single select uses regular SelectField
+                    setattr(TheForm, field.field, SelectField(label=field.name, choices=choices))
+                continue
+
+            # Special case for organization fields
+            if field.field in ["organisation", "organisations"]:
+                organisations = Organisation.query.order_by(Organisation.name).all()
+                choices = [("", "")]
+                choices.extend([(f"{org.prefix}:{org.reference}", org.name) for org in organisations])
+                
+                if field.cardinality == "n":
+                    # For multi-select, use a StringField that will be enhanced by JS
+                    field_obj = StringField(
+                        field.name,
+                        render_kw={
+                            "data-multi-select": "input",
+                            "data-hint": f"Start typing {field.name.lower()} to see suggestions",
+                            "choices": choices[1:]
+                        }
                     )
                     setattr(TheForm, field.field, field_obj)
                 else:
