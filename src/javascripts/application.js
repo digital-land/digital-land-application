@@ -1,5 +1,4 @@
 /* global fetch, turf */
-import SelectOrNew from './modules/select-or-new'
 import MultiSelect from './modules/multi-select'
 import Slugify from './modules/slugify'
 

@@ -8,7 +8,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
 from govuk_frontend_wtf.wtforms_widgets import GovDateInput
 from wtforms import DateField, StringField, TextAreaField, URLField, SelectField
-from wtforms.validators import URL, DataRequired, ValidationError, Regexp
+from wtforms.validators import URL, DataRequired, ValidationError, Regexp, Optional
 
 from application.database.models import CategoryValue, Organisation
 
@@ -102,17 +102,17 @@ class FormBuilder:
             if form_field is not None:
                 match field.datatype:
                     case "curie":
-                        setattr(TheForm, field.field, form_field(label=field.name, validators=[curie_validator]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[Optional(), (curie_validator)]))
                     case "string" | "text":
-                        setattr(TheForm, field.field, form_field(label=field.name))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[Optional()]))
                     case "url":
-                        setattr(TheForm, field.field , form_field(label=field.name, validators=[URL()]))
+                        setattr(TheForm, field.field , form_field(label=field.name, validators=[Optional(), URL()]))
                     case "datetime":
-                        setattr(TheForm, field.field, form_field(label=field.name, widget=GovDateInput()))
+                        setattr(TheForm, field.field, form_field(label=field.name, widget=GovDateInput(), validators=[Optional()]))
                     case "multipolygon":
-                        setattr(TheForm, field.field, form_field(label=field.name, validators=[geometry_check]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[Optional(), geometry_check]))
                     case "point":
-                        setattr(TheForm, field.field, form_field(label=field.name, validators=[point_check]))
+                        setattr(TheForm, field.field, form_field(label=field.name, validators=[Optional(), point_check]))
                     case _:
                         if field.field == "name" or (
                             field.field == "reference" and self.require_reference
@@ -121,7 +121,7 @@ class FormBuilder:
                                 TheForm, field.field, form_field(label=field.name, validators=[DataRequired()])
                             )
                         else:
-                            setattr(TheForm, field.field, form_field(label=field.name))
+                            setattr(TheForm, field.field, form_field(label=field.name, validators=[Optional()]))
         
         form = TheForm(sorted_fields=self.sorted_fields())
         return form

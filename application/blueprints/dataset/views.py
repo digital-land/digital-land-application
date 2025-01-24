@@ -63,37 +63,37 @@ def add_record(dataset):
         data = form.data
         last_record = (
             db.session.query(Record)
-            .filter_by(dataset_id=dataset.dataset)
-            .order_by(Record.row_id.desc())
+            .filter(Record.dataset_dataset==ds.dataset)
+            .order_by(Record.entity.desc())
             .first()
         )
-        next_id = last_record.row_id + 1 if last_record else 0
         entity = (
             last_record.entity + 1
             if (last_record is not None and last_record.entity is not None)
-            else dataset.entity_minimum
+            else ds.entity_minimum
         )
-        if not (dataset.entity_minimum <= entity <= dataset.entity_maximum):
+        if not (ds.entity_minimum <= entity <= ds.entity_maximum):
             flash(
-                f"entity id {entity} is outside of range {dataset.entity_minimum} to {dataset.entity_maximum}"
+                f"entity id {entity} is outside of range {ds.entity_minimum} to {ds.entity_maximum}"
             )
-            return redirect(url_for("main.dataset", id=dataset.dataset))
+            return redirect(url_for("dataset.dataset", dataset=ds.dataset))
 
         if "csrf_token" in data:
             del data["csrf_token"]
 
-        record = Record(row_id=next_id, entity=entity)
+
+        record = Record(entity=entity, dataset_dataset=ds.dataset)
         extra_data = {}
         for key, val in data.items():
-            if hasattr(record, key):
+            if hasattr(record, key) and val:
                 setattr(record, key, val)
             else:
-                extra_data[key] = val
+                extra_data[key] = val if val else None
         if extra_data:
             record.data = extra_data
 
-        dataset.records.append(record)
-        db.session.add(dataset)
+        ds.records.append(record)
+        db.session.add(ds)
         db.session.commit()
         flash("Record added")
         return redirect(url_for("dataset.dataset", dataset=ds.dataset))

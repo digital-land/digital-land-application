@@ -1,4 +1,5 @@
 import datetime
+from types import NoneType
 import uuid
 from typing import List, Optional
 from functools import total_ordering
@@ -86,8 +87,14 @@ class Dataset(DateModel):
     @property
     def name(self):
         return self.dataset.replace("-", " ")
+        
 
+    def get(self, field):
+        return self.data.get(field)
+    def sorted_fields(self):
+        return sorted(self.fields)
 
+    
 @total_ordering
 class Field(DateModel):
     __tablename__ = "field"
@@ -169,6 +176,10 @@ class Record(DateModel):
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
     dataset_dataset: Mapped[str] = mapped_column(ForeignKey("dataset.dataset"))
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
+
+
+    def get(self, field):
+        return self.data.get(field)
 
 
 class Category(DateModel):

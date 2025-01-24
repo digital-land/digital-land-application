@@ -21,7 +21,7 @@
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
         {% for field in form.ordered_fields() %}
-            <div class="govuk-form-group">
+            <div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
               {% if field.type == "DateField" %}
                 {{ field }}
               {% elif field.type == "TextAreaField" %}
@@ -35,9 +35,9 @@
                 {{ field(class_="govuk-input") }}
               {% endif %}
               {% if field.errors %}
-                  <div class="text-danger">
+                  <div>
                       {% for error in field.errors %}
-                          <p>{{ error }}</p>
+                          <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
                       {% endfor %}
                   </div>
               {% endif %}
