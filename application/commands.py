@@ -10,10 +10,10 @@ from application.database.models import (
     CategoryValue,
     Dataset,
     Field,
+    Organisation,
     Record,
     Specification,
     dataset_field,
-    Organisation,
 )
 from application.extensions import db
 
@@ -53,7 +53,7 @@ def import_data(reference, parent):
     if len(spec) > 0:
         print(
             "A specification has already been imported. Another one can't be imported."
-        )   
+        )
         return sys.exit(1)
 
     specification = _get_specification(reference)
@@ -63,10 +63,10 @@ def import_data(reference, parent):
 
     try:
         data, name = _get_specification_data(reference, specification)
-        
+
         # Start transaction
         db.session.begin_nested()
-        
+
         _import_specification_datasets(reference, data, name)
         _set_entity_minimum_and_maximum()
         _import_dataset_fields(data)
@@ -75,11 +75,11 @@ def import_data(reference, parent):
         _set_parent_dataset(parent)
         _check_for_geography_datasets()
         _import_organisations()
-        
+
         # If we get here, commit the transaction
         db.session.commit()
         print("Successfully imported specification data")
-        
+
     except Exception as e:
         # If anything fails, rollback the transaction
         db.session.rollback()
@@ -162,6 +162,7 @@ def _import_dataset_fields(data):
                 print(f"Added field {field['field']} to dataset {dataset['dataset']}")
         db.session.commit()
 
+
 def _set_field_attributes():
     for field in Field.query.all():
         field_url = f"{FIELDS_URL}&field__exact={field.field}"
@@ -175,6 +176,7 @@ def _set_field_attributes():
                 field.parent_field = field_data[0]["parent_field"]
             db.session.add(field)
     db.session.commit()
+
 
 def _set_entity_minimum_and_maximum():
     for dataset in Dataset.query.all():
@@ -192,7 +194,6 @@ def _get_specification_data(reference, specification):
     name = specification[reference]["name"]
     data = json.loads(data_str)
     return data, name
-
 
 
 def _get_and_import_category_values():
@@ -266,16 +267,21 @@ def _check_for_geography_datasets():
             db.session.add(dataset)
     db.session.commit()
 
+
 def _import_organisations():
     url = f"{DIGTAL_LAND_DB_URL}/organisation.json?_shape=array&_size=max"
     organisations = _get(url)
     for organisation in organisations:
-        la_type = organisation.get("local_authority_type") if organisation.get("local_authority_type") else None
+        la_type = (
+            organisation.get("local_authority_type")
+            if organisation.get("local_authority_type")
+            else None
+        )
         org = Organisation(
             prefix=organisation["prefix"],
             reference=organisation["reference"],
             name=organisation["name"],
-            local_authority_type=la_type
-            )
+            local_authority_type=la_type,
+        )
         db.session.add(org)
     db.session.commit()

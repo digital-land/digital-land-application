@@ -1,8 +1,8 @@
 import datetime
-from types import NoneType
 import uuid
-from typing import List, Optional
 from functools import total_ordering
+from types import NoneType
+from typing import List, Optional
 
 from sqlalchemy import UUID, Date, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -87,14 +87,14 @@ class Dataset(DateModel):
     @property
     def name(self):
         return self.dataset.replace("-", " ")
-        
 
     def get(self, field):
         return self.data.get(field)
+
     def sorted_fields(self):
         return sorted(self.fields)
 
-    
+
 @total_ordering
 class Field(DateModel):
     __tablename__ = "field"
@@ -162,23 +162,23 @@ class Field(DateModel):
         return False
 
 
-
 class Record(DateModel):
     __tablename__ = "record"
 
-    id: Mapped[uuid.uuid4] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    reference: Mapped[str] = mapped_column(Text, primary_key=True)
+    dataset_dataset: Mapped[str] = mapped_column(
+        ForeignKey("dataset.dataset"), primary_key=True
     )
+    name: Mapped[str] = mapped_column(Text)
     entity: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
-    reference: Mapped[str] = mapped_column(Text, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
-    dataset_dataset: Mapped[str] = mapped_column(ForeignKey("dataset.dataset"))
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
 
-
     def get(self, field):
+        if hasattr(self, field):
+            return getattr(self, field)
         return self.data.get(field)
 
 
@@ -200,6 +200,7 @@ class CategoryValue(DateModel):
     name: Mapped[str] = mapped_column(Text)
     category_reference: Mapped[str] = mapped_column(ForeignKey("category.reference"))
     category: Mapped["Category"] = relationship("Category", back_populates="values")
+
 
 class Organisation(DateModel):
     __tablename__ = "organisation"

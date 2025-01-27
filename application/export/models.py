@@ -7,16 +7,16 @@ class FieldModel(BaseModel):
     field: str
 
 
-class RowModel(BaseModel):
+class RecordModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     # id: UUID4
     data: dict[str, str]
 
 
-class DatesetModel(BaseModel):
+class DatasetModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     dataset: str
     fields: list[FieldModel]
-    rows: list[RowModel]
+    records: list[RecordModel]
