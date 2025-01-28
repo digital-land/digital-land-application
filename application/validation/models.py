@@ -4,7 +4,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     ValidationInfo,
-    field_validator,
+    model_validator,
 )
 from sqlalchemy import inspect, select
 from application.database.models import Record, Dataset
@@ -41,20 +41,22 @@ class RecordModel(BaseModel):
     data: dict[str, Any]
     fields: list[FieldModel]
 
-    @field_validator("data", mode="after")
+    @model_validator(mode="after")
     @classmethod
-    def validate_data(
-        cls, value: dict[str, Any], info: ValidationInfo
-    ) -> dict[str, Any]:
-        fields = info.data.get("fields", [])
-        valid_field_names = {field.field for field in fields}
-        
+    def validate_model(
+        cls, 
+        model: "RecordModel",
+        info: ValidationInfo
+    ) -> "RecordModel":
+        # Get fields directly from the model instance
+        valid_field_names = {field.field for field in model.fields}
+    
         # Get all dataset names
         stmt = select(Dataset.dataset)
         dataset_names = {d[0] for d in db.session.execute(stmt).fetchall()}
         
         # Check each key in data exists in the fields list and validate dataset references
-        for key, val in value.items():
+        for key, val in model.data.items():
             if key not in valid_field_names:
                 raise ValueError(f"Field '{key}' in data is not a valid field for this dataset")
             
@@ -65,7 +67,7 @@ class RecordModel(BaseModel):
                 except ValueError as e:
                     raise ValueError(f"Invalid dataset reference: {str(e)}")
         
-        return value
+        return model
 
     @classmethod
     def from_form_data(
@@ -81,5 +83,9 @@ class RecordModel(BaseModel):
         description = form_data.get("description", "")
         notes = form_data.get("notes", "")
         return cls(
-            name=name, description=description, notes=notes, data=data, fields=fields
+            name=name,
+            description=description,
+            notes=notes,
+            data=data,
+            fields=fields,
         )

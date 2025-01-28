@@ -91,7 +91,7 @@ class Dataset(DateModel):
     def get(self, field):
         return self.data.get(field)
 
-    def sorted_fields(self):
+    def ordered_fields(self):
         return sorted(self.fields)
 
 
@@ -152,6 +152,8 @@ class Field(DateModel):
                     return True
                 if prefix == "end" and other_prefix not in ["entry", "start"]:
                     return False
+                else:
+                    return prefix < other_prefix
 
             if self.datatype != "datetime" and other.datatype != "datetime":
                 return self.field < other.field

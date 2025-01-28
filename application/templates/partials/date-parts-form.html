@@ -1,0 +1,54 @@
+<div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
+  <fieldset class="govuk-fieldset" role="group" aria-describedby="{{ field.name }}-hint">
+    <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+      <h1 class="govuk-fieldset__heading">{{ field.label.text }}</h1>
+    </legend>
+    <div id="{{ field.name }}-hint" class="govuk-hint">For example, 27 03 2014</div>
+    {% for error in field.errors %}
+      <p id="{{ field.name }}-error" class="govuk-error-message">
+        <span class="govuk-visually-hidden">Error:</span> {{ error }}
+      </p>
+    {% endfor %}
+    <div class="govuk-date-input" id="{{ field.name }}">
+      <div class="govuk-date-input__item">
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-date-input__label" for="{{ field.name }}_day">Day</label>
+          <input
+            class="govuk-input govuk-date-input__input govuk-input--width-2 {% if 'day' in error_parts %}govuk-input--error{% endif %}"
+            id="{{ field.name }}_day"
+            name="{{ field.name }}_day"
+            type="text"
+            inputmode="numeric"
+            value="{{ field.data.day }}"
+          >
+        </div>
+      </div>
+      <div class="govuk-date-input__item">
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-date-input__label" for="{{ field.name }}_month">Month</label>
+          <input
+            class="govuk-input govuk-date-input__input govuk-input--width-2 {% if 'month' in error_parts %}govuk-input--error{% endif %}"
+            id="{{ field.name }}_month"
+            name="{{ field.name }}_month"
+            type="text"
+            inputmode="numeric"
+            value="{{ field.data.month }}"
+          >
+        </div>
+      </div>
+      <div class="govuk-date-input__item">
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-date-input__label" for="{{ field.name }}_year">Year</label>
+          <input
+            class="govuk-input govuk-date-input__input govuk-input--width-4 {% if 'year' in error_parts %}govuk-input--error{% endif %}"
+            id="{{ field.name }}_year"
+            name="{{ field.name }}_year"
+            type="text"
+            inputmode="numeric"
+            value="{{ field.data.year }}"
+          >
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</div>

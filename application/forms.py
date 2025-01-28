@@ -1,10 +1,11 @@
 import json
 import re
 
+from flask import render_template, request
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
 from geojson import loads
-from govuk_frontend_wtf.wtforms_widgets import GovDateInput
+from markupsafe import Markup
 from shapely import wkt
 from wtforms import DateField, SelectField, StringField, TextAreaField, URLField
 from wtforms.validators import URL, DataRequired, Optional, Regexp, ValidationError
@@ -45,6 +46,54 @@ def point_check(form, field):
         )
 
 
+def progressive_date_validator(form, field):
+    """Validates that date input follows progressive validation rules:
+    - YYYY is valid
+    - YYYY MM is valid 
+    - YYYY MM DD is valid
+    But partial dates must include year first."""
+    if not field.raw_data:  # No data submitted
+        return
+        
+    # GovDateInput provides data as [day, month, year]
+    day, month, year = field.raw_data
+    
+    # Year is required
+    if not year:
+        raise ValidationError('Year is required')
+    if not year.isdigit() or len(year) != 4:
+        raise ValidationError('Year must be YYYY format')
+        
+    # If month provided, validate it
+    if month:
+        if not month.isdigit() or int(month) < 1 or int(month) > 12:
+            raise ValidationError('Month must be between 1 and 12')
+            
+        # If day provided when month is set, validate it
+        if day:
+            if not day.isdigit() or int(day) < 1 or int(day) > 31:
+                raise ValidationError('Day must be between 1 and 31')
+    elif day:  # Day provided without month
+        raise ValidationError('Cannot provide day without month')
+
+
+class DatePartsInputWidget:
+    def __call__(self, field, **kwargs):
+        # Get the errors with parts from the field
+        errors_with_parts = field.get_errors_with_parts()
+        # Create a dict of which parts have errors
+        error_parts = {error["part"]: error["message"] for error in errors_with_parts}
+
+        return Markup(
+            render_template(
+                "partials/date-parts-form.html",
+                field=field,
+                error_parts=error_parts,
+                **kwargs,
+            )
+        )
+
+
 class DynamicForm(FlaskForm):
 
     def __init__(self, sorted_fields, *args, **kwargs):
@@ -63,7 +112,7 @@ class FormBuilder:
         "string": StringField,
         "text": TextAreaField,
         "url": URLField,
-        "datetime": DateField,
+        "datetime": ProgressiveDateField,  # Use our custom field
         "multipolygon": TextAreaField,
         "point": StringField,
     }
@@ -184,7 +233,7 @@ class FormBuilder:
                             form_field(
                                 label=field.name,
                                 widget=GovDateInput(),
-                                validators=[Optional()],
+                                validators=[Optional(), progressive_date_validator],
                             ),
                         )
                     case "multipolygon":

@@ -1,9 +1,9 @@
 from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from pydantic import ValidationError
 
-from application.database.models import Dataset, Field, Record
+from application.database.models import Dataset, Record
 from application.extensions import db
-from application.forms import FormBuilder
+from application.forms.builder import FormBuilder
 from application.validation.models import RecordModel
 
 ds = Blueprint("dataset", __name__, template_folder="templates", url_prefix="/dataset")
@@ -29,7 +29,7 @@ def dataset(dataset):
 
     page = {"title": ds.name, "caption": "Dataset"}
     return render_template(
-        "dataset/records.html",
+        "dataset/dataset.html",
         dataset=ds,
         breadcrumbs=breadcrumbs,
         page=page,

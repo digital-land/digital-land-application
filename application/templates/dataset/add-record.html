@@ -42,7 +42,7 @@
                     </select>
                   </div>
                 </div>
-              {% elif field.type == "DateField" %}
+              {% elif field.type == "DatePartField" %}
                 {{ field }}
               {% elif field.type == "TextAreaField" %}
                 {{ field.label(class="govuk-label") }}
@@ -55,7 +55,7 @@
                 {{ field.label(class="govuk-label") }}
                 {{ field(class="govuk-input") }}
               {% endif %}
-              {% if field.errors %}
+              {% if field.type != "DatePartField" and field.errors %}
                   <div>
                       {% for error in field.errors %}
                           <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
@@ -79,7 +79,6 @@
 {% block digitalLandScripts -%}
   {{ super() }}
   <script>
-    new window.dptp.Slugify()
     // Initialize multi-select for fields with cardinality n
     document.querySelectorAll('[data-module="multi-select"]').forEach(function($module) {
       new window.dptp.MultiSelect($module).init()

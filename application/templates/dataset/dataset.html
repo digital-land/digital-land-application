@@ -1,0 +1,46 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+  {% for record in dataset.records %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <section class="app-summary-card">
+          <header class="app-summary-card__header">
+            <h2 class="app-summary-card__title">
+              {{record.name}}
+            </h2>
+            <div class="app-summary-card__actions">
+              {%- if not config.AUTHENTICATION_ON or session["user"] %}
+              <a href="#" class="govuk-link">Edit<span
+                  class="govuk-visually-hidden"> {{ dataset.dataset}}</span></a>
+              {%- endif %}
+            </div>
+          </header>
+          <div class="app-summary-card__body">
+            <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Reference</dt>
+                <dd class="govuk-summary-list__value"><a href="#">{{ record.reference }}</a></dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Name</dt>
+                <dd class="govuk-summary-list__value">{{ record.name }}</dd>
+              </div>
+              {% for field in dataset.ordered_fields() %}
+                {% if field.field not in ["name", "reference"] %}
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">{{ field.name }}</dt>
+                    <dd class="govuk-summary-list__value">{{ record[field.field] }}</dd>
+                  </div>
+                {% endif %}
+              {% endfor %}
+          </div>
+          <div class="app-summary-card__footer">
+            <a href="#" class="govuk-link">View<span
+                class="govuk-visually-hidden"> {{ dataset.dataset}}</span></a>
+          </div>
+        </section>
+      </div>
+    </div>
+  {% endfor %}
+{% endblock %}
