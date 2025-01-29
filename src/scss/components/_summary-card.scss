@@ -20,8 +20,8 @@
     padding: govuk-spacing(3);
 
     @include govuk-media-query($from: desktop) {
-      // display: flex;
-      // justify-content: space-between;
+      display: flex;
+      justify-content: flex-end;
       align-items: start;
     }
   }

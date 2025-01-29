@@ -1,4 +1,9 @@
 // import all digital land and GOVUK Frontend scss
+$app-images-path: "/static/images/";
+$govuk-global-styles: true;
+$govuk-new-link-styles: true;
+
+// import all digital land and GOVUK Frontend scss
 @import "digital-land-frontend/dl-frontend";
 
 // app specific component scss
@@ -8,7 +13,7 @@
 @import "components/multi-select";
 @import "components/progress-banner";
 @import "components/table";
-@import "components/button";
+@import "components/button-menu";
 @import "components/summary-list";
 
 

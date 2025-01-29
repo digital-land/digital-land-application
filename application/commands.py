@@ -278,8 +278,7 @@ def _import_organisations():
             else None
         )
         org = Organisation(
-            prefix=organisation["prefix"],
-            reference=organisation["reference"],
+            organisation=organisation["organisation"],
             name=organisation["name"],
             local_authority_type=la_type,
         )

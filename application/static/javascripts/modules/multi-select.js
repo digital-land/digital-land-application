@@ -6,6 +6,7 @@ function MultiSelect ($module) {
   this.$module = $module
 }
 
+
 MultiSelect.prototype.init = function (params) {
   this.setupOptions(params)
   // get the original form field that needs to be kept updated

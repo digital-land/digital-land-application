@@ -1,9 +1,14 @@
-from application.database.models import CategoryValue, Organisation
-from application.forms.forms import DynamicForm, curie_validator, geometry_check, point_check, DatePartField
-
-
 from wtforms import SelectField, StringField, TextAreaField, URLField
 from wtforms.validators import URL, DataRequired, Optional
+
+from application.database.models import CategoryValue, Organisation
+from application.forms.forms import (
+    DatePartField,
+    DynamicForm,
+    curie_validator,
+    geometry_check,
+    point_check,
+)
 
 
 class FormBuilder:
@@ -56,21 +61,16 @@ class FormBuilder:
             if field.field in ["organisation", "organisations"]:
                 organisations = Organisation.query.order_by(Organisation.name).all()
                 choices = [("", "")]
-                choices.extend(
-                    [
-                        (f"{org.prefix}:{org.reference}", org.name)
-                        for org in organisations
-                    ]
-                )
+                choices.extend([(org.organisation, org.name) for org in organisations])
 
                 if field.cardinality == "n":
-                    # For multi-select, use a StringField that will be enhanced by JS
+                    # For multi-select, use a StringField that will be enhanced by JS - skip the first empty choice
                     field_obj = StringField(
                         field.name,
                         render_kw={
                             "data-multi-select": "input",
                             "data-hint": f"Start typing {field.name.lower()} to see suggestions",
-                            "choices": choices[1:],
+                            "choices": choices,
                         },
                     )
                     setattr(TheForm, field.field, field_obj)
@@ -98,7 +98,7 @@ class FormBuilder:
                         field.field,
                         StringField(
                             label=field.name,
-                            validators=[Optional(), (curie_validator)],
+                            validators=[Optional(), curie_validator],
                         ),
                     )
                 case "string":
@@ -117,9 +117,7 @@ class FormBuilder:
                     setattr(
                         TheForm,
                         field.field,
-                        URLField(
-                            label=field.name, validators=[Optional(), URL()]
-                        ),
+                        URLField(label=field.name, validators=[Optional(), URL()]),
                     )
                 case "datetime":
                     setattr(
@@ -137,6 +135,7 @@ class FormBuilder:
                         TextAreaField(
                             label=field.name,
                             validators=[Optional(), geometry_check],
+                            render_kw={"data-hint": "Enter a WKT multipolygon"},
                         ),
                     )
                 case "point":
@@ -144,7 +143,9 @@ class FormBuilder:
                         TheForm,
                         field.field,
                         StringField(
-                            label=field.name, validators=[Optional(), point_check]
+                            label=field.name,
+                            validators=[Optional(), point_check],
+                            render_kw={"data-hint": "Enter a WKT point"},
                         ),
                     )
                 case _:

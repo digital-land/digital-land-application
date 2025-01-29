@@ -46,6 +46,9 @@
                 {{ field }}
               {% elif field.type == "TextAreaField" %}
                 {{ field.label(class="govuk-label") }}
+                {% if field.render_kw and field.render_kw.get('data-hint') %}
+                  <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
+                {% endif %}
                 {{ field(class="govuk-textarea", rows="8") }}
               {% elif field.type == "SelectField" %}
                 {{ field.label(class="govuk-label") }}
@@ -53,6 +56,9 @@
                 {{ field(class="govuk-select", **{'aria-describedby': 'hint-' ~ field.name}) }}
               {% else %}
                 {{ field.label(class="govuk-label") }}
+                {% if field.render_kw and field.render_kw.get('data-hint') %}
+                  <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
+                {% endif %}
                 {{ field(class="govuk-input") }}
               {% endif %}
               {% if field.type != "DatePartField" and field.errors %}

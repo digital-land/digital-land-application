@@ -10,6 +10,7 @@ utils.createTypeAheadContainer = function (labelText, id, hintText) {
   $label.classList.add('govuk-label')
   $label.setAttribute('for', id + '-typeAhead')
   $label.textContent = labelText
+  $container.appendChild($label)
 
   if (hintText) {
     const $hint = document.createElement('div')
@@ -20,8 +21,6 @@ utils.createTypeAheadContainer = function (labelText, id, hintText) {
 
   const $autocompleteContainer = document.createElement('div')
   $autocompleteContainer.classList.add('autocomplete-container')
-
-  $container.appendChild($label)
   $container.appendChild($autocompleteContainer)
 
   return $container

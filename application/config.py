@@ -15,12 +15,15 @@ class Config(object):
     SQLALCHEMY_RECORD_QUERIES = False
     DEBUG = False
     WTF_CSRF_ENABLED = True
+    AUTHENTICATION_ON = True
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
     WTF_CSRF_ENABLED = False
+    AUTHENTICATION_ON = False
 
 
 class TestConfig(Config):
     TESTING = True
+    AUTHENTICATION_ON = False

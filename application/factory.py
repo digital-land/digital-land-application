@@ -13,6 +13,7 @@ def create_app(config_filename):
     register_blueprints(app)
     register_extensions(app)
     register_templates(app)
+    register_context_processors(app)
     register_filters(app)
     register_commands(app)
     return app
@@ -67,6 +68,22 @@ def register_templates(app):
     )
     app.jinja_loader = multi_loader
     WTFormsHelpers(app)
+
+
+def register_context_processors(app):
+    """
+    Add template context variables and functions
+    """
+
+    def base_context_processor():
+        from flask import session
+
+        authenticated = not app.config.get("AUTHENTICATION_ON", False) or (
+            app.config.get("AUTHENTICATION_ON", False) and session.get("user")
+        )
+        return {"assetPath": "/static", "AUTHENTICATED": authenticated}
+
+    app.context_processor(base_context_processor)
 
 
 def register_filters(app):

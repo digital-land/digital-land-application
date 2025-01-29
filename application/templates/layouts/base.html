@@ -32,6 +32,7 @@
 {%- from 'govuk_frontend_jinja/components/warning-text/macro.html' import govukWarningText -%}
 {%- from 'components/section-nav/macro.html' import appSectionNavigation -%}
 {%- from 'components/field/macro.html' import appField -%}
+{%- from 'components/button-menu/macro.html' import buttonMenu -%}
 {%- from "digital-land-frontend/components/sub-nav-tabs/macro.jinja" import dlSubNavTabs %}
 {% block stylesheets %}
   <link rel="stylesheet" href="/static/stylesheets/application.css">
@@ -60,7 +61,7 @@
             <a href="{{ url_for('explore.index') }}" class="govuk-header__link">Explore data</a>
           </li>
           <li class="govuk-header__navigation-item">
-            {% if not config.AUTHENTICATION_ON or session["user"] %}
+            {% if AUTHENTICATED %}
             <a class="govuk-header__link" href="#">
               Sign out
             </a>
@@ -160,7 +161,7 @@
   <div class="govuk-width-container">
     <div class="govuk-footer__meta">
       <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
-        {% if config.AUTHENTICATION_ON and session["user"] %}
+        {% if AUTHENTICATED %}
           <h2 class="govuk-visually-hidden">Admin links</h2>
           <ul class="govuk-footer__inline-list">
             <li class="govuk-footer__inline-list-item">

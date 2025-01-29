@@ -1,4 +1,3 @@
-
 {% extends "layouts/base.html" %}
 {% block title %}index{% endblock %}
 
@@ -27,10 +26,10 @@
           {% endfor %}
         </ol>
         <h2 class="govuk-heading-m">Get started</h2>
-        {% if not config.AUTHENTICATION_ON or (config['AUTHENTICATION_ON'] and session["user"]) %}
+        {% if AUTHENTICATED %}
           <a href="{{ url_for('dataset.add_record', dataset=specification.parent_dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span>Add a new {{ specification.parent_dataset.name }}</a>
         {% else %}
-          <a href="#" class="govuk-button">Sign in to add a </a>
+          <a href="#" class="govuk-button">Sign in to add a {{ specification.parent_dataset.name | capitalize }}</a>
         {% endif %}
        </div>
     </div>

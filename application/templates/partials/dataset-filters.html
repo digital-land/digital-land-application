@@ -1,0 +1,37 @@
+
+<form class="govuk-form" action="{{ url_for('dataset.dataset', dataset=dataset.dataset) }}" method="get">
+
+    <!-- filter by organisations -->
+    <div class="govuk-form-group">
+      {% set random_org_filter_id = range(10000,99999) | random() %}
+      {% set checkboxesHTML %}
+        {% set org_checked = request.args.getlist("organisations") %}
+        {% for org in organisations %}
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="{{ org }}" name="organisations" type="checkbox" value="{{ org }}" {% if org in org_checked %}checked=checked{% endif %}>
+          <label class="govuk-label govuk-checkboxes__label" for="{{ org }}">
+            {{ org }}
+          </label>
+        </div>
+        {% endfor %}
+      {% endset %}
+
+      {% call dlFilterGroup({
+        "title": "Organisations",
+        "is_open": True,
+        "selected": 0
+      }) %}
+
+      {{ dlFilterCheckboxes({
+        "uniqueID": random_org_filter_id,
+        "checkboxesHTML": checkboxesHTML
+      }) }}
+      {% endcall %}
+    </div>
+
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit">Filter</button>
+      <a class="govuk-link" href="{{ url_for('dataset.dataset', dataset=dataset.dataset) }}">Clear</a>
+    </div>
+  </form>

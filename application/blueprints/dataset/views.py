@@ -1,6 +1,7 @@
-from flask import Blueprint, abort, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, url_for
 from pydantic import ValidationError
 
+from application.blueprints.dataset.utils import create_record
 from application.database.models import Dataset, Record
 from application.extensions import db
 from application.forms.builder import FormBuilder
@@ -9,15 +10,9 @@ from application.validation.models import RecordModel
 ds = Blueprint("dataset", __name__, template_folder="templates", url_prefix="/dataset")
 
 
-def _make_reference(dataset, entity):
-    dataset_prefix = "".join([word[0] for word in dataset.split("-")])
-    return f"{dataset_prefix}-{entity}"
-
-
 @ds.route("/<string:dataset>")
 def dataset(dataset):
     ds = Dataset.query.get_or_404(dataset)
-
     breadcrumbs = {
         "items": [
             {"text": "Home", "href": url_for("main.index")},
@@ -26,23 +21,12 @@ def dataset(dataset):
             },
         ]
     }
-
-    page = {"title": ds.name, "caption": "Dataset"}
-    return render_template(
-        "dataset/dataset.html",
-        dataset=ds,
-        breadcrumbs=breadcrumbs,
-        page=page,
-        sub_navigation=None,
-    )
+    return render_template("dataset/dataset.html", dataset=ds, breadcrumbs=breadcrumbs)
 
 
-@ds.route("/<dataset>/record", methods=["GET", "POST"])
-def add_record(dataset):
-
-    ds = Dataset.query.get(dataset)
-    if ds is None:
-        return abort(404)
+@ds.route("/<string:dataset>/records")
+def records(dataset):
+    ds = Dataset.query.get_or_404(dataset)
 
     breadcrumbs = {
         "items": [
@@ -51,7 +35,33 @@ def add_record(dataset):
                 "text": ds.name.capitalize(),
                 "href": url_for("dataset.dataset", dataset=ds.dataset),
             },
-            {"text": "Add record"},
+            {"text": "Records"},
+        ]
+    }
+
+    page = {"title": ds.name, "caption": "Dataset"}
+    return render_template(
+        "dataset/records.html",
+        dataset=ds,
+        breadcrumbs=breadcrumbs,
+        page=page,
+        sub_navigation=None,
+    )
+
+
+@ds.route("/<string:dataset>/add", methods=["GET", "POST"])
+def add_record(dataset):
+
+    ds = Dataset.query.get_or_404(dataset)
+
+    breadcrumbs = {
+        "items": [
+            {"text": "Home", "href": url_for("main.index")},
+            {
+                "text": ds.name.capitalize(),
+                "href": url_for("dataset.dataset", dataset=ds.dataset),
+            },
+            {"text": "Add"},
         ]
     }
 
@@ -82,7 +92,7 @@ def add_record(dataset):
             # Bind form data to Pydantic model
             record_model = RecordModel.from_form_data(data, ds.fields)
 
-            # Get next entity ID
+            # Get last record for its entity ID
             last_record = (
                 db.session.query(Record)
                 .filter(Record.dataset_dataset == ds.dataset)
@@ -104,13 +114,7 @@ def add_record(dataset):
             validated_data = record_model.model_dump(
                 by_alias=True, exclude={"fields": True}
             )
-            reference = _make_reference(ds.dataset, entity)
-            record = Record(
-                entity=entity,
-                dataset_dataset=ds.dataset,
-                reference=reference,
-                **validated_data,
-            )
+            record = create_record(entity, validated_data, ds)
             ds.records.append(record)
             db.session.add(ds)
             db.session.commit()
@@ -138,3 +142,21 @@ def add_record(dataset):
     return render_template(
         "dataset/add-record.html", dataset=ds, breadcrumbs=breadcrumbs, form=form
     )
+
+
+@ds.route("/<string:dataset>/<string:reference>")
+def record(dataset, reference):
+    ds = Dataset.query.get_or_404(dataset)
+    r = Record.query.get_or_404((reference, ds.dataset))
+
+    breadcrumbs = {
+        "items": [
+            {"text": "Home", "href": url_for("main.index")},
+            {
+                "text": ds.name.capitalize(),
+                "href": url_for("dataset.dataset", dataset=ds.dataset),
+            },
+            {"text": r.reference},
+        ]
+    }
+    return render_template("dataset/record.html", record=r, breadcrumbs=breadcrumbs)

@@ -1,11 +1,9 @@
 import datetime
-import uuid
 from functools import total_ordering
-from types import NoneType
 from typing import List, Optional
 
-from sqlalchemy import UUID, Date, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Date, ForeignKey, Text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +26,14 @@ class DateModel(db.Model):
         Date, onupdate=datetime.datetime.today
     )
     end_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+
+
+class Organisation(DateModel):
+    __tablename__ = "organisation"
+
+    organisation: Mapped[str] = mapped_column(Text, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    local_authority_type: Mapped[Optional[str]] = mapped_column(Text)
 
 
 class Specification(DateModel):
@@ -80,8 +86,13 @@ class Dataset(DateModel):
         "Record",
         back_populates="dataset",
     )
+    # Self-referential relationships
     children: Mapped[List["Dataset"]] = relationship(
-        "Dataset",
+        "Dataset", back_populates="parent_dataset", cascade="all, delete-orphan"
+    )
+
+    parent_dataset: Mapped[Optional["Dataset"]] = relationship(
+        "Dataset", remote_side="Dataset.dataset", back_populates="children"
     )
 
     @property
@@ -176,12 +187,37 @@ class Record(DateModel):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
+    organisation_id: Mapped[Optional[Organisation]] = mapped_column(
+        ForeignKey("organisation.organisation"), nullable=True
+    )
+    organisation: Mapped[Optional["Organisation"]] = relationship(
+        "Organisation",
+    )
+    organisation_ids: Mapped[Optional[List[str]]] = mapped_column(
+        ARRAY(Text), nullable=True
+    )
+    dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
 
     def get(self, field):
         if hasattr(self, field):
             return getattr(self, field)
         return self.data.get(field)
+
+    @property
+    def organisations(self):
+        orgs = []
+        if self.organisation_ids is None:
+            return orgs
+        for org in self.organisation_ids:
+            org = Organisation.query.get(org)
+            if org:
+                orgs.append(org)
+        return orgs
+
+    @organisations.setter
+    def organisations(self, value):
+        self.organisation_ids = [org.organisation for org in value]
 
 
 class Category(DateModel):
@@ -202,12 +238,3 @@ class CategoryValue(DateModel):
     name: Mapped[str] = mapped_column(Text)
     category_reference: Mapped[str] = mapped_column(ForeignKey("category.reference"))
     category: Mapped["Category"] = relationship("Category", back_populates="values")
-
-
-class Organisation(DateModel):
-    __tablename__ = "organisation"
-
-    prefix: Mapped[str] = mapped_column(Text, primary_key=True)
-    reference: Mapped[str] = mapped_column(Text, primary_key=True)
-    name: Mapped[str] = mapped_column(Text)
-    local_authority_type: Mapped[Optional[str]] = mapped_column(Text)

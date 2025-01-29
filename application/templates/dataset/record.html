@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+
+<span class="govuk-caption-l">{{ record.dataset.name | capitalize }}</span>
+<h1 class="govuk-heading-l">{{ record.reference }}</h1>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+        <section class="app-summary-card">
+            <header class="app-summary-card__header">
+                <h2 class="app-summary-card__title">
+                   {{ record.dataset.name | capitalize }}
+                </h2>
+                <div class="app-summary-card__actions">
+                    {%- if AUTHENTICATED %}
+                        <a href="#" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
+                    {%- endif %}
+                </div>
+            </header>
+            <div class="app-summary-card__body">
+                <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+                    {% for field in record.dataset.ordered_fields() if field.field not in ["entry-date", "start-date", "end-date"] %}
+                        <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">{{ field.name }}</dt>
+                            <dd class="govuk-summary-list__value">
+                                {% if field.field == 'organisations' and record.organisations %}
+                                    <ul class="govuk-list">
+                                        {% for org in record.organisations %}
+                                            <li>{{ org.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% elif field.field == 'organisation' and record.organisation %}
+                                    {{ record.organisation.name }}
+                                {% else %}
+                                    {% set value = record.get(field.field) %}
+                                    {% if value is not none %}
+                                        {% if value is string %}
+                                            {{ value }}
+                                        {% elif value is sequence and value is not string %}
+                                            <ul class="govuk-list">
+                                                {% for item in value %}
+                                                    <li>{{ item }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+            </div>
+        </section>
+    </div>
+</div>
+
+{% endblock %}

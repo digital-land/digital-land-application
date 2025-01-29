@@ -1,18 +1,54 @@
 {% extends 'layouts/base.html' %}
 
+
 {% block content %}
-  {% for record in dataset.records %}
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <section class="app-summary-card">
+
+<span class="govuk-caption-xl">{{ dataset.name | capitalize}} records</span>
+<h1 class="govuk-heading-xl">{{ dataset.name | capitalize }}</h1>
+
+<!-- if there are no records then display a message and no there rest of the rows below -->
+{% if dataset.records | length == 0 %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <p class="govuk-body">There are no records for this dataset yet</p>
+    <p class="govuk-body">To add records you'll need to find or create a <a href="{{ url_for('dataset.dataset', dataset=dataset.parent_dataset.dataset) }}" class="govuk-link">{{dataset.parent_dataset.name | capitalize}}</a> record first</p>
+  </div>
+</div>
+{% else %}
+  <div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <form class="govuk-form" data-module="dl-list-filter-form">
+      <div class="govuk-form-group">
+        <label for="filter" class="govuk-label">Find a {{ dataset.name | capitalize }}</label>
+        <div class="govuk-hint">For example by plan name, reference, description or organisation</div>
+        <input type="text" class="govuk-input" id="filter" name="filter">
+      </div>
+    </form>
+  </div>
+  </div>
+
+  {% if dataset.parent is none %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <div class="govuk-!-margin-bottom-6">
+        <a href="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}" class="govuk-button govuk-button--secondary">Add a record</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  <div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <div class="app-list__wrapper dl-list-filter__count">
+      <div data-filter="list">
+        {% for record in dataset.records %}
+        <section class="app-summary-card" data-filter="item">
           <header class="app-summary-card__header">
-            <h2 class="app-summary-card__title">
-              {{record.name}}
+            <h2 class="app-summary-card__title" data-filter="match-content">
+              {{ dataset.name | capitalize }}
             </h2>
             <div class="app-summary-card__actions">
-              {%- if not config.AUTHENTICATION_ON or session["user"] %}
-              <a href="#" class="govuk-link">Edit<span
-                  class="govuk-visually-hidden"> {{ dataset.dataset}}</span></a>
+              {%- if AUTHENTICATED %}
+                <a href="#" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
               {%- endif %}
             </div>
           </header>
@@ -20,27 +56,70 @@
             <dl class="govuk-summary-list govuk-!-margin-bottom-0">
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Reference</dt>
-                <dd class="govuk-summary-list__value"><a href="#">{{ record.reference }}</a></dd>
+                <dd class="govuk-summary-list__value" data-filter="match-content">
+                  <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}"
+                      class="govuk-link govuk-link--text-colour">{{ record.reference }}</a>
+                </dd>
               </div>
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Name</dt>
-                <dd class="govuk-summary-list__value">{{ record.name }}</dd>
+                <dd class="govuk-summary-list__value" data-filter="match-content">{{ record.name }}</dd>
               </div>
-              {% for field in dataset.ordered_fields() %}
-                {% if field.field not in ["name", "reference"] %}
-                  <div class="govuk-summary-list__row">
-                    <dt class="govuk-summary-list__key">{{ field.name }}</dt>
-                    <dd class="govuk-summary-list__value">{{ record[field.field] }}</dd>
-                  </div>
-                {% endif %}
-              {% endfor %}
-          </div>
-          <div class="app-summary-card__footer">
-            <a href="#" class="govuk-link">View<span
-                class="govuk-visually-hidden"> {{ dataset.dataset}}</span></a>
-          </div>
-        </section>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Description</dt>
+                <dd class="govuk-summary-list__value" data-filter="match-content">{{ record.description if record.description }}</dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{% if record.organisations %}Organisations{% else %}Organisation{% endif %}</dt>
+                <dd class="govuk-summary-list__value" data-filter="match-content">
+                  {% if record.organisations %}
+                    <ul class="govuk-list">
+                      {% for organisation in record.organisations %}
+                        <li>{{ organisation.name }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% elif record.organisation %}
+                    <p class="govuk-body">{{ record.organisation }}</p>
+                  {% endif %}
+                </dd>
+              </div>
+              </dl>
+            </div>
+            <div class="app-summary-card__footer">
+              <div class="app-summary-card__actions">
+                <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}"
+                  class="govuk-link">View</a>
+              </div>
+            </div>
+          </section>
+          {% endfor %}
+        </div>
+      </div>
+      <p class="dl-list-filter__no-filter-match js-hidden">No records match that search term.</p>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <div role="complementary">
+        <h2 class="govuk-heading-m">Related</h2>
+        <p class="govuk-hint govuk-!-font-size-14">This data can be viewed as a table</p>
+        <a href="{{ url_for('dataset.records', dataset=dataset.dataset) }}" class="govuk-link govuk-font-size-19">View as table</a>
       </div>
     </div>
-  {% endfor %}
-{% endblock %}
+  </div>
+  {% endif %}
+{% endblock content %}
+
+{% block pageScripts %}
+<script>
+  var $formToFilterList = document.querySelector('[data-module="dl-list-filter-form"]');
+  if ($formToFilterList) {
+    new DLFrontend.ListFilter($formToFilterList).init();
+  }
+
+  // Watch for list filter updates and update records/record text
+  document.querySelector('[data-filter="list"]').addEventListener('list:filtered', function() {
+    var count = parseInt(document.querySelector('.js-list-filter__count').textContent);
+    var recordsText = document.querySelector('.records-text');
+    recordsText.textContent = count === 1 ? 'record' : 'records';
+  });
+</script>
+{% endblock pageScripts %}
