@@ -85,6 +85,14 @@
                   {% endif %}
                 </dd>
               </div>
+              {% if record.owning_record %}
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{record.owning_record.dataset.name | capitalize}}</dt>
+                  <dd class="govuk-summary-list__value" data-filter="match-content">
+                    <a href="{{ url_for('dataset.record', reference=record.owning_record.reference, dataset=record.owning_record.dataset.dataset) }}" class="govuk-link">{{ record.owning_record.reference }}</a>
+                  </dd>
+                </div>
+              {% endif %}
               </dl>
             </div>
             <div class="app-summary-card__footer">

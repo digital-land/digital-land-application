@@ -70,7 +70,7 @@
                         <header class="app-summary-card__header">
                             <h2 class="app-summary-card__title">{{ related_dataset.name | title }}</h2>
                             <div class="app-summary-card__actions">
-                                <a href="{{ url_for('dataset.related_record', dataset=record.dataset_id, reference=record.reference, related_dataset=r.dataset.dataset, related_reference=r.reference) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
+                                <a href="{{ url_for('dataset.record', dataset=r.dataset.dataset, reference=r.reference) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
                             </div>
                         </header>
                         <div class="app-summary-card__body">
@@ -88,7 +88,7 @@
                                         {% elif field.field == 'organisation' and r.organisation %}
                                             {{ r.organisation.name }}
                                         {% elif field.field == "reference" %}
-                                            <a href="{{ url_for('dataset.related_record', dataset=record.dataset_id, reference=record.reference, related_dataset=r.dataset.dataset, related_reference=r.reference) }}" class="govuk-link">{{ r.reference }}</a>
+                                            <a href="{{ url_for('dataset.record', dataset=r.dataset.dataset, reference=r.reference) }}" class="govuk-link">{{ r.reference }}</a>
                                         {% else %}
                                             {% set value = r.get(field.field) %}
                                             {% if value is not none %}
