@@ -51,9 +51,7 @@
               {{ dataset.name | capitalize }}
             </h2>
             <div class="app-summary-card__actions">
-              {%- if AUTHENTICATED %}
-                <a href="#" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
-              {%- endif %}
+              <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
             </div>
           </header>
           <div class="app-summary-card__body">
@@ -88,12 +86,6 @@
                 </dd>
               </div>
               </dl>
-            </div>
-            <div class="app-summary-card__footer">
-              <div class="app-summary-card__actions">
-                <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}"
-                  class="govuk-link">View</a>
-              </div>
             </div>
           </section>
           {% endfor %}
