@@ -18,12 +18,6 @@
   .app-summary-card__footer {
     background-color: govuk-colour('light-grey');
     padding: govuk-spacing(3);
-
-    @include govuk-media-query($from: desktop) {
-      display: flex;
-      justify-content: flex-end;
-      align-items: start;
-    }
   }
 
   .app-summary-card__title {

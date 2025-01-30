@@ -10020,13 +10020,6 @@ p + .govuk-heading-s,
   background-color: #f3f2f1;
   padding: 15px;
 }
-@media (min-width: 48.0625em) {
-  .app-summary-card .app-summary-card__footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: start;
-  }
-}
 .app-summary-card .app-summary-card__title {
   font-family: "GDS Transport", arial, sans-serif;
   -webkit-font-smoothing: antialiased;

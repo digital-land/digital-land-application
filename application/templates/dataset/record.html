@@ -35,7 +35,9 @@
                                 {% else %}
                                     {% set value = record.get(field.field) %}
                                     {% if value is not none %}
-                                        {% if value is string %}
+                                        {% if record.dataset.parent_dataset and field.field == record.dataset.parent_dataset.dataset %}
+                                            <a href="{{url_for('dataset.record', reference=value, dataset=record.dataset.parent_dataset.dataset)}}" class="govuk-link">{{ value }}</a>
+                                        {% elif value is string %}
                                             {{ value }}
                                         {% elif value is sequence and value is not string %}
                                             <ul class="govuk-list">
@@ -59,20 +61,58 @@
 </div>
 <!-- if this record.dataset.parent_dataset is none then it is a top level dataset and has children so iterate over them -->
 {% if record.dataset.parent_dataset is none %}
-    {% for child in record.dataset.children  %}
-
+    {% for related_dataset in record.dataset.children  %}
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-three-quarters">
-
-                <h2 class="govuk-heading-m">{{ child.name }}</h2>
-                {% for record in child.records %}
+                <h2 class="govuk-heading-m">{{ related_dataset.name | capitalize }}</h2>
+                {% for r in record.related_records %}
                     <section class="app-summary-card">
                         <header class="app-summary-card__header">
-                            <h2 class="app-summary-card__title">{{ record.reference }}</h2>
+                            <h2 class="app-summary-card__title">{{ related_dataset.name | title }}</h2>
+                            <div class="app-summary-card__actions">
+                                <a href="{{ url_for('dataset.related_record', dataset=record.dataset_id, reference=record.reference, related_dataset=r.dataset.dataset, related_reference=r.reference) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
+                            </div>
                         </header>
+                        <div class="app-summary-card__body">
+                            <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+                            {% for field in r.dataset.ordered_fields() if field.field not in ["entry-date", "start-date", "end-date"] %}
+                                <div class="govuk-summary-list__row">
+                                    <dt class="govuk-summary-list__key">{{ field.name }}</dt>
+                                    <dd class="govuk-summary-list__value">
+                                        {% if field.field == 'organisations' and r.organisations %}
+                                            <ul class="govuk-list">
+                                                {% for org in r.organisations %}
+                                                    <li>{{ org.name }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% elif field.field == 'organisation' and r.organisation %}
+                                            {{ r.organisation.name }}
+                                        {% elif field.field == "reference" %}
+                                            <a href="{{ url_for('dataset.related_record', dataset=record.dataset_id, reference=record.reference, related_dataset=r.dataset.dataset, related_reference=r.reference) }}" class="govuk-link">{{ r.reference }}</a>
+                                        {% else %}
+                                            {% set value = r.get(field.field) %}
+                                            {% if value is not none %}
+                                                {% if value is string %}
+                                                    {{ value }}
+                                                {% elif value is sequence and value is not string %}
+                                                    <ul class="govuk-list">
+                                                        {% for item in value %}
+                                                            <li>{{ item }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    {{ value }}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            {% endfor %}
+                            </dl>
+                        </div>
                     </section>
                 {% endfor %}
-                <a href="#" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ child.name }}</a>
+                <a href="#" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ related_dataset.name }}</a>
                 <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
             </div>
         </div>

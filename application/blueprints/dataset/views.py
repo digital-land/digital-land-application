@@ -95,7 +95,7 @@ def add_record(dataset):
             # Get last record for its entity ID
             last_record = (
                 db.session.query(Record)
-                .filter(Record.dataset_dataset == ds.dataset)
+                .filter(Record.dataset_id == ds.dataset)
                 .order_by(Record.entity.desc())
                 .first()
             )
@@ -160,3 +160,40 @@ def record(dataset, reference):
         ]
     }
     return render_template("dataset/record.html", record=r, breadcrumbs=breadcrumbs)
+
+
+@ds.route(
+    "/<string:dataset>/<string:reference>/<string:related_dataset>/<string:related_reference>"
+)
+def related_record(dataset, reference, related_dataset, related_reference):
+    primary_record = Record.query.get_or_404((reference, dataset))
+    related_record = Record.query.get_or_404((related_reference, related_dataset))
+    breadcrumbs = {
+        "items": [
+            {"text": "Home", "href": url_for("main.index")},
+            {
+                "text": primary_record.dataset.name.capitalize(),
+                "href": url_for(
+                    "dataset.dataset", dataset=primary_record.dataset.dataset
+                ),
+            },
+            {
+                "text": primary_record.reference,
+                "href": url_for(
+                    "dataset.record",
+                    dataset=primary_record.dataset.dataset,
+                    reference=primary_record.reference,
+                ),
+            },
+            {
+                "text": related_record.dataset.name.capitalize(),
+                "href": url_for(
+                    "dataset.dataset", dataset=related_record.dataset.dataset
+                ),
+            },
+            {"text": related_record.reference},
+        ]
+    }
+    return render_template(
+        "dataset/record.html", record=related_record, breadcrumbs=breadcrumbs
+    )

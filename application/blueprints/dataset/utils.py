@@ -9,7 +9,7 @@ def make_reference(dataset, entity):
 def create_record(entity, validated_data, ds):
     record = Record(
         entity=entity,
-        dataset_dataset=ds.dataset,
+        dataset_id=ds.dataset,
         reference=make_reference(ds.dataset, entity),
     )
     if "organisation" in validated_data:

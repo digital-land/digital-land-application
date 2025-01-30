@@ -2,7 +2,7 @@ import datetime
 from functools import total_ordering
 from typing import List, Optional
 
-from sqlalchemy import Date, ForeignKey, Text
+from sqlalchemy import Date, ForeignKey, ForeignKeyConstraint, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,8 +11,19 @@ from application.extensions import db
 
 dataset_field = db.Table(
     "dataset_field",
-    db.Column("dataset", Text, ForeignKey("dataset.dataset"), primary_key=True),
-    db.Column("field", Text, ForeignKey("field.field"), primary_key=True),
+    db.Column(
+        "dataset",
+        Text,
+        ForeignKey("dataset.dataset", name="fk_dataset_dataset_field"),
+        primary_key=True,
+    ),
+    db.Column(
+        "field",
+        Text,
+        ForeignKey("field.field", name="fk_field_dataset_field"),
+        primary_key=True,
+    ),
+    db.PrimaryKeyConstraint("dataset", "field", name="pk_dataset_field"),
 )
 
 
@@ -35,6 +46,8 @@ class Organisation(DateModel):
     name: Mapped[str] = mapped_column(Text)
     local_authority_type: Mapped[Optional[str]] = mapped_column(Text)
 
+    __table_args__ = (db.PrimaryKeyConstraint("organisation", name="pk_organisation"),)
+
 
 class Specification(DateModel):
     __tablename__ = "specification"
@@ -44,6 +57,10 @@ class Specification(DateModel):
     datasets: Mapped[List["Dataset"]] = relationship(
         "Dataset",
         back_populates="specification",
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("specification", name="pk_specification"),
     )
 
     @property
@@ -65,10 +82,11 @@ class Dataset(DateModel):
 
     dataset: Mapped[str] = mapped_column(primary_key=True)
     parent: Mapped[Optional[str]] = mapped_column(
-        ForeignKey("dataset.dataset"), nullable=True
+        ForeignKey("dataset.dataset", name="fk_dataset_self_parent"), nullable=True
     )
     specification_id: Mapped[Optional[str]] = mapped_column(
-        ForeignKey("specification.specification"), nullable=True
+        ForeignKey("specification.specification", name="fk_specification_dataset"),
+        nullable=True,
     )
     is_geography: Mapped[bool] = mapped_column(default=False)
     entity_minimum: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
@@ -95,6 +113,8 @@ class Dataset(DateModel):
         "Dataset", remote_side="Dataset.dataset", back_populates="children"
     )
 
+    __table_args__ = (db.PrimaryKeyConstraint("dataset", name="pk_dataset"),)
+
     @property
     def name(self):
         return self.dataset.replace("-", " ")
@@ -116,7 +136,7 @@ class Field(DateModel):
     cardinality: Mapped[Optional[str]] = mapped_column(Text)
     parent_field: Mapped[Optional[str]] = mapped_column(Text)
     category_reference: Mapped[Optional[str]] = mapped_column(
-        Text, ForeignKey("category.reference"), nullable=True
+        Text, ForeignKey("category.reference", name="fk_categoryـfield"), nullable=True
     )
     datatype: Mapped[Optional[str]] = mapped_column(Text)
     datasets: Mapped[List["Dataset"]] = relationship(
@@ -127,6 +147,8 @@ class Field(DateModel):
     category: Mapped[Optional["Category"]] = relationship(
         "Category",
     )
+
+    __table_args__ = (db.PrimaryKeyConstraint("field", name="pk_field"),)
 
     def __eq__(self, other):
         return self.field == other.field
@@ -179,8 +201,8 @@ class Record(DateModel):
     __tablename__ = "record"
 
     reference: Mapped[str] = mapped_column(Text, primary_key=True)
-    dataset_dataset: Mapped[str] = mapped_column(
-        ForeignKey("dataset.dataset"), primary_key=True
+    dataset_id: Mapped[str] = mapped_column(
+        ForeignKey("dataset.dataset", name="fk_dataset_record"), primary_key=True
     )
     name: Mapped[str] = mapped_column(Text)
     entity: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
@@ -188,7 +210,8 @@ class Record(DateModel):
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
     organisation_id: Mapped[Optional[Organisation]] = mapped_column(
-        ForeignKey("organisation.organisation"), nullable=True
+        ForeignKey("organisation.organisation", name="fk_organisation_record"),
+        nullable=True,
     )
     organisation: Mapped[Optional["Organisation"]] = relationship(
         "Organisation",
@@ -197,7 +220,31 @@ class Record(DateModel):
         ARRAY(Text), nullable=True
     )
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
-    dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
+
+    owning_record_reference: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    owning_record_dataset: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    owning_record: Mapped[Optional["Record"]] = relationship(
+        "Record",
+        remote_side=lambda: [Record.reference, Record.dataset_id],
+        back_populates="related_records",
+    )
+
+    related_records: Mapped[List["Record"]] = relationship(
+        "Record",
+        back_populates="owning_record",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("reference", "dataset_id", name="pk_record"),
+        ForeignKeyConstraint(
+            ["owning_record_reference", "owning_record_dataset"],
+            ["record.reference", "record.dataset_id"],
+            ondelete="CASCADE",
+            name="fk_record_self_owning_record",
+        ),
+    )
 
     def get(self, field):
         if hasattr(self, field):
@@ -229,6 +276,8 @@ class Category(DateModel):
         back_populates="category",
     )
 
+    __table_args__ = (db.PrimaryKeyConstraint("reference", name="pk_category"),)
+
 
 class CategoryValue(DateModel):
     __tablename__ = "category_value"
@@ -236,5 +285,11 @@ class CategoryValue(DateModel):
     prefix: Mapped[str] = mapped_column(Text, primary_key=True)
     reference: Mapped[str] = mapped_column(Text, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
-    category_reference: Mapped[str] = mapped_column(ForeignKey("category.reference"))
+    category_reference: Mapped[str] = mapped_column(
+        ForeignKey("category.reference", name="fk_category_category_value")
+    )
     category: Mapped["Category"] = relationship("Category", back_populates="values")
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint("prefix", "reference", name="pk_category_value"),
+    )
