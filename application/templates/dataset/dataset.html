@@ -10,11 +10,11 @@
 {% if dataset.records | length == 0 %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
-    <p class="govuk-body">There are no records for this dataset yet.</p>
+    <p class="govuk-body">There are no records for the {{dataset.name | capitalize}} dataset yet.</p>
     {% if not dataset.parent %}
       <a href="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}" class="govuk-button govuk-button--secondary">Add a {{dataset.name | capitalize}}</a>
     {% else %}
-      <p class="govuk-body">To add records you'll need to <a href="{{ url_for('dataset.dataset', dataset=dataset.parent) }}" class="govuk-link">find</a> or <a href="{{ url_for('dataset.add_record', dataset=dataset.parent) }}" class="govuk-link">create</a> a {{ dataset.parent_dataset.name | capitalize}} to link the new {{dataset.name | capitalize}} records with.</p>
+      <p class="govuk-body">To add records you'll first need to <a href="{{ url_for('dataset.dataset', dataset=dataset.parent) }}" class="govuk-link">find</a> or <a href="{{ url_for('dataset.add_record', dataset=dataset.parent) }}" class="govuk-link">create</a> a {{ dataset.parent_dataset.name | capitalize}} and then you can add {{dataset.name | capitalize}} records from there.</p>
     {% endif %}
   </div>
 </div>
