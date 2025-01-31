@@ -65,7 +65,7 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-three-quarters">
                 <h2 class="govuk-heading-m">{{ related_dataset.name | capitalize }}</h2>
-                {% for r in record.related_records %}
+                {% for r in record.get_related_by_dataset(related_dataset.dataset) %}
                     <section class="app-summary-card">
                         <header class="app-summary-card__header">
                             <h2 class="app-summary-card__title">{{ related_dataset.name | title }}</h2>

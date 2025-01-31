@@ -66,31 +66,29 @@
   }
 
   MultiSelect.prototype.init = function (params) {
-    this.setupOptions(params);
-
-    // Initialize currentlySelected array first
-    this.currentlySelected = [];
-
     // get the original form field that needs to be kept updated
     this.$formGroup = this.$module.querySelector('[data-multi-select="form-group"]');
     this.$input = this.$formGroup.querySelector('input');
+
+    // Setup options first so we can use the field label
+    this.setupOptions(params);
+
+    // Initialize currentlySelected array
+    this.currentlySelected = [];
 
     // get the options from a hidden select element
     this.$hiddenSelect = this.$module.querySelector('[data-multi-select="select"]');
     this.selectOptions = utils.getSelectOptions(this.$hiddenSelect);
     this.selectOptionLabels = this.selectOptions.map(($option) => $option[0]);
 
-    // Clear any existing value in the input
-    this.$input.value = '';
-
-    // get the initial set of selections
-    this.initiallySelected();
-
-    // set up a type ahead component
+    // set up a type ahead component first
     this.setUpTypeAhead();
 
-    // setup area to display selected - moved after typeahead setup
+    // setup area to display selected
     this.setupSelectedPanel();
+
+    // get and display the initial set of selections
+    this.initiallySelected();
 
     // hide the original form element
     this.$formGroup.classList.add(this.options.hiddenClass);
@@ -249,7 +247,7 @@
     const inputString = this.$input.getAttribute('value') || this.$input.value || '';
     if (inputString) {
       this.currentlySelected = this.getSelectionsFromString(inputString);
-      // Immediately display the initial selections
+      // Panel should already exist at this point
       this.displaySelected();
     }
   };
@@ -259,10 +257,14 @@
     if (!this.$selectedPanel) {
       this.$selectedPanel = document.createElement('div');
       this.$selectedPanel.className = 'multi-select__select-panel multi-select__select-panel--none';
-      // Insert after the typeahead container instead of the form group
+      // Insert after the typeahead container
       this.$typeAheadContainer.parentNode.insertBefore(this.$selectedPanel, this.$typeAheadContainer.nextSibling);
     }
-    this.displaySelected(); // Call displaySelected instead of updatePanelContent to ensure initial state is shown
+    // Initialize with empty state
+    const p = document.createElement('p');
+    p.className = 'govuk-hint';
+    p.textContent = 'No selections made';
+    this.$selectedPanel.appendChild(p);
   };
 
   MultiSelect.prototype.setUpTypeAhead = function () {
@@ -299,7 +301,11 @@
     params = params || {};
     this.options = {};
     this.options.separator = params.separator || ';';
-    this.options.nameOfThingSelecting = params.nameOfThingSelecting || 'organistions';
+
+    // Get the field label text to use as the name of thing being selected
+    const fieldLabel = this.$formGroup.querySelector('label').textContent.toLowerCase();
+    this.options.nameOfThingSelecting = params.nameOfThingSelecting || fieldLabel || 'items';
+
     this.options.hiddenClass = params.hiddenClass || 'app-hidden';
     this.options.emptyInputOnConfirm = params.emptyInputOnConfirm || true;
   };

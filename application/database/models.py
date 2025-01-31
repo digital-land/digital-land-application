@@ -249,7 +249,36 @@ class Record(DateModel):
     def get(self, field):
         if hasattr(self, field):
             return getattr(self, field)
-        return self.data.get(field)
+
+        # Get the field value from data
+        value = self.data.get(field)
+
+        # If no value, return None
+        if value is None:
+            return None
+
+        # Get the field definition from the dataset
+        field_def = next((f for f in self.dataset.fields if f.field == field), None)
+
+        # If field has cardinality "n" and a category reference, look up the category values
+        if field_def and field_def.cardinality == "n" and field_def.category_reference:
+            # Split the semicolon-separated values
+            refs = value.split(";") if isinstance(value, str) else value
+            # Look up each reference in CategoryValue
+            names = []
+            for ref in refs:
+                if ref:  # Only process non-empty values
+                    category_value = CategoryValue.query.filter_by(
+                        reference=ref, category_reference=field_def.category_reference
+                    ).first()
+                    if category_value:
+                        names.append(category_value.name)
+            return names if names else value
+
+        return value
+
+    def get_related_by_dataset(self, dataset):
+        return [r for r in self.related_records if r.dataset_id == dataset]
 
     @property
     def organisations(self):
