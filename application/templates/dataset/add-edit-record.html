@@ -15,15 +15,24 @@
       {% else %}
         <h1 class="govuk-heading-l">Add record</h1>
       {% endif %}
+
+      {% if error_list %}
+        {{ govukErrorSummary({
+          "titleText": "There is a problem",
+          "errorList": error_list
+        }) }}
+      {% endif %}
+
       <form action="{{ form_action }}" method="post">
         {{ form.hidden_tag() }}
         {% for field in form.ordered_fields() %}
-          <div class="govuk-form-group">
+          <div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
             {% if field.render_kw and field.render_kw.get('data-multi-select') == 'input' %}
               <div class="app-multi-select" data-module="multi-select">
                 <div data-multi-select="form-group">
                   {{ field.label(class="govuk-label") }}
-                  {{ field(class="govuk-input") }}
+                  <div id="hint-{{ field.name }}" class="govuk-hint">Start typing to see suggestions</div>
+                  {{ field(class="govuk-input", **{'aria-describedby': 'hint-' ~ field.name}) }}
                 </div>
                 <div class="app-hidden">
                   <select name="{{ field.name }}_select" id="{{ field.name }}_select" data-multi-select="select">
@@ -33,9 +42,32 @@
                   </select>
                 </div>
               </div>
+            {% elif field.type == "DatePartField" %}
+              {{ field }}
+            {% elif field.type == "TextAreaField" %}
+              {{ field.label(class="govuk-label") }}
+              {% if field.render_kw and field.render_kw.get('data-hint') %}
+                <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
+              {% endif %}
+              {{ field(class="govuk-textarea", rows="8") }}
+            {% elif field.type == "SelectField" %}
+              {{ field.label(class="govuk-label") }}
+              <div id="hint-{{ field.name }}" class="govuk-hint">Start typing to see suggestions</div>
+              {{ field(class="govuk-select", **{'aria-describedby': 'hint-' ~ field.name}) }}
             {% else %}
               {{ field.label(class="govuk-label") }}
+              {% if field.render_kw and field.render_kw.get('data-hint') %}
+                <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
+              {% endif %}
               {{ field(class="govuk-input") }}
+            {% endif %}
+
+            {% if field.type != "DatePartField" and field.errors %}
+              <div>
+                {% for error in field.errors %}
+                  <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
+                {% endfor %}
+              </div>
             {% endif %}
           </div>
         {% endfor %}
