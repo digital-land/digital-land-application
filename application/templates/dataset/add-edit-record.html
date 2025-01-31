@@ -98,8 +98,12 @@
 
     // Initialize accessible-autocomplete for single select fields
     document.querySelectorAll('select.govuk-select').forEach(function(select) {
+      // Get the pre-selected display name if it exists
+      const selectedName = select.getAttribute('data-selected-name');
+
       accessibleAutocomplete.enhanceSelectElement({
-        selectElement: select
+        selectElement: select,
+        defaultValue: selectedName || select.options[select.selectedIndex]?.text || ''
       })
     })
   </script>

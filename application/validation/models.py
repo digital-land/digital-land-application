@@ -10,7 +10,7 @@ from application.extensions import db
 def cross_dataset_reference_validator(dataset_name: str, value: str) -> str:
     # Check if value exists as a reference in the target dataset
     stmt = select(Record).where(
-        Record.dataset_dataset == dataset_name, Record.reference == value
+        Record.dataset_id == dataset_name, Record.reference == value
     )
     record = db.session.execute(stmt).scalar_one_or_none()
     if not record:

@@ -179,7 +179,12 @@ def edit_record(dataset, reference):
             {"text": "Edit"},
         ]
     }
-    builder = FormBuilder(ds.fields, additional_skip_fields=[], obj=r)
+
+    inactive_fields = []
+    if r.owning_record is not None:
+        inactive_fields.append(r.owning_record.dataset_id)
+
+    builder = FormBuilder(ds.fields, inactive_fields=inactive_fields, obj=r)
     form = builder.build()
 
     if form.validate_on_submit():

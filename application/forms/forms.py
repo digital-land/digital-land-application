@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import datetime
+
 from flask import render_template, request
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
@@ -8,7 +9,7 @@ from geojson import loads
 from markupsafe import Markup
 from shapely import wkt
 from wtforms import Field
-from wtforms.validators import Regexp, ValidationError
+from wtforms.validators import ValidationError
 
 
 def curie_validator(form, field):
@@ -70,14 +71,28 @@ class DatePartValidationError(ValidationError):
 
 
 class DynamicForm(FlaskForm):
-
     def __init__(self, sorted_fields, *args, **kwargs):
+        # Clear any existing fields from previous instantiations
+        class_attrs = list(self.__class__.__dict__.keys())
+        for attr in class_attrs:
+            if isinstance(getattr(self.__class__, attr), Field):
+                delattr(self.__class__, attr)
+
         super().__init__(*args, **kwargs)
         self.field_order = sorted_fields
 
+        # Clean up _fields to only include valid fields
+        valid_field_names = {field.field for field in sorted_fields}
+        invalid_fields = [
+            name for name in self._fields.keys() if name not in valid_field_names
+        ]
+        for field_name in invalid_fields:
+            del self._fields[field_name]
+
     def ordered_fields(self):
         for field in self.field_order:
-            yield getattr(self, field.field)
+            if hasattr(self, field.field):
+                yield getattr(self, field.field)
 
 
 class DatePartField(Field):
@@ -94,8 +109,10 @@ class DatePartField(Field):
         `obj` argument.
         """
         if value:
-            # Handle string date from database
-            if isinstance(value, str):
+            # Handle string date from database or dict from form
+            if isinstance(value, dict):
+                self.data = value
+            elif isinstance(value, str):
                 try:
                     parts = value.split("-")
                     if len(parts) == 3:
@@ -220,7 +237,7 @@ class DatePartField(Field):
             # Ensure errors are propagated to the form level
             self.errors = [str(error) for error in self._part_errors]
         return success
-    
+
 
 class CsvUploadForm(FlaskForm):
     csv_file = FileField("Upload a file", validators=[FileRequired()])
