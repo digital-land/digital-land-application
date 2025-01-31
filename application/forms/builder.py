@@ -96,7 +96,7 @@ class FormBuilder:
             if field.field in self.inactive_fields:
                 render_kw["disabled"] = True
                 render_kw["data-hint"] = (
-                    "This field is read only as it's the link another record"
+                    "You can't edit this because it's the link to the parent record"
                 )
 
             if field.category_reference is not None:
