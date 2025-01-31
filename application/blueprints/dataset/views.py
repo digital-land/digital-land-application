@@ -1,7 +1,11 @@
 from flask import Blueprint, flash, redirect, render_template, url_for
 from pydantic import ValidationError
 
-from application.blueprints.dataset.utils import create_record
+from application.blueprints.dataset.utils import (
+    create_record,
+    next_entity,
+    update_record,
+)
 from application.database.models import Dataset, Record
 from application.extensions import db
 from application.forms.builder import FormBuilder
@@ -93,17 +97,7 @@ def add_record(dataset):
             record_model = RecordModel.from_form_data(data, ds.fields)
 
             # Get last record for its entity ID
-            last_record = (
-                db.session.query(Record)
-                .filter(Record.dataset_id == ds.dataset)
-                .order_by(Record.entity.desc())
-                .first()
-            )
-            entity = (
-                last_record.entity + 1
-                if (last_record is not None and last_record.entity is not None)
-                else ds.entity_minimum
-            )
+            entity = next_entity(ds)
             if not (ds.entity_minimum <= entity <= ds.entity_maximum):
                 flash(
                     f"entity id {entity} is outside of range {ds.entity_minimum} to {ds.entity_maximum}"
@@ -129,10 +123,12 @@ def add_record(dataset):
                     getattr(form, field).errors = [message]
 
             return render_template(
-                "dataset/add-record.html",
+                "dataset/add-edit-record.html",
                 dataset=ds,
                 breadcrumbs=breadcrumbs,
                 form=form,
+                action="add",
+                form_action=url_for("dataset.add_record", dataset=ds.dataset),
                 error_list=[
                     {"text": f"{error['loc'][0]}: {error['msg']}"}
                     for error in e.errors()
@@ -140,7 +136,12 @@ def add_record(dataset):
             )
 
     return render_template(
-        "dataset/add-record.html", dataset=ds, breadcrumbs=breadcrumbs, form=form
+        "dataset/add-edit-record.html",
+        dataset=ds,
+        breadcrumbs=breadcrumbs,
+        form=form,
+        action="add",
+        form_action=url_for("dataset.add_record", dataset=ds.dataset),
     )
 
 
@@ -160,3 +161,54 @@ def record(dataset, reference):
         ]
     }
     return render_template("dataset/record.html", record=r, breadcrumbs=breadcrumbs)
+
+
+@ds.route("/<string:dataset>/<string:reference>/edit", methods=["GET", "POST"])
+def edit_record(dataset, reference):
+    ds = Dataset.query.get_or_404(dataset)
+    r = Record.query.get_or_404((reference, ds.dataset))
+
+    breadcrumbs = {
+        "items": [
+            {"text": "Home", "href": url_for("main.index")},
+            {
+                "text": ds.name.capitalize(),
+                "href": url_for("dataset.dataset", dataset=ds.dataset),
+            },
+            {"text": r.reference},
+            {"text": "Edit"},
+        ]
+    }
+    builder = FormBuilder(ds.fields, additional_skip_fields=[], obj=r)
+    form = builder.build()
+
+    if form.validate_on_submit():
+        data = form.data
+        # Remove CSRF token before validation
+        if "csrf_token" in data:
+            del data["csrf_token"]
+
+        # Bind form data to Pydantic model
+        record_model = RecordModel.from_form_data(data, ds.fields)
+        validated_data = record_model.model_dump(
+            by_alias=True, exclude={"fields": True}
+        )
+        record = update_record(validated_data, r)
+        db.session.add(record)
+        db.session.commit()
+        flash("Record updated")
+        return redirect(
+            url_for("dataset.record", dataset=ds.dataset, reference=r.reference)
+        )
+
+    return render_template(
+        "dataset/add-edit-record.html",
+        dataset=ds,
+        record=r,
+        breadcrumbs=breadcrumbs,
+        form=form,
+        action="edit",
+        form_action=url_for(
+            "dataset.edit_record", dataset=ds.dataset, reference=r.reference
+        ),
+    )

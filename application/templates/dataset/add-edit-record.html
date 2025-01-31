@@ -9,7 +9,7 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-three-quarters">
     <span class="govuk-caption-l">{{ dataset.name | capitalize }}</span>
-    <h1 class="govuk-heading-l">Add record</h1>
+    <h1 class="govuk-heading-l">{{ action | capitalize }} record</h1>
   </div>
 </div>
 {% if error_list %}
@@ -21,7 +21,7 @@
 {% endif %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
-  <form method="POST" action="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}">
+  <form method="POST" action="{{ form_action }}">
     <div class="govuk-form-group">
       {{ form.hidden_tag() }}
       <fieldset class="govuk-fieldset">
@@ -72,12 +72,18 @@
       {% endfor %}
     </fieldset>
     </div>
-    {{
-      govukButton({
-        "text": "Add record",
-        "type": "submit"
-      })
-    }}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
+    <div class="govuk-button-group">
+      {{
+        govukButton({
+          "text": action | capitalize ~ " record",
+          "type": "submit"
+        })
+      }}
+      {% if action == "edit" %}
+        <a href="{{ url_for('dataset.record', dataset=dataset.dataset, reference=record.reference) }}" class="govuk-button govuk-button--secondary">Cancel</a>
+      {% endif %}
+    </div>
   </form>
 </div>
 {% endblock content %}

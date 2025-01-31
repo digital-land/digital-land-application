@@ -1,4 +1,5 @@
 from application.database.models import Organisation, Record
+from application.extensions import db
 
 
 def make_reference(dataset, entity):
@@ -12,9 +13,17 @@ def create_record(entity, validated_data, ds):
         dataset_id=ds.dataset,
         reference=make_reference(ds.dataset, entity),
     )
+    return set_record_data(validated_data, record)
+
+
+def update_record(validated_data, record):
+    return set_record_data(validated_data, record)
+
+
+def set_record_data(validated_data, record):
     if "organisation" in validated_data:
         org = validated_data.pop("organisation")
-        org_obj = Organisation.query.get(org["organisation"])
+        org_obj = Organisation.query.get(org)
         if org_obj is not None:
             record.organisation = org_obj
 
@@ -41,7 +50,6 @@ def create_record(entity, validated_data, ds):
         else:
             data[key] = value
     record.data = data
-
     return record
 
 
@@ -56,3 +64,19 @@ def _collect_date_fields(data):
     elif year:
         return year
     return None
+
+
+def next_entity(ds):
+    last_record = (
+        db.session.query(Record)
+        .filter(Record.dataset_id == ds.dataset)
+        .order_by(Record.entity.desc())
+        .first()
+    )
+    entity = (
+        last_record.entity + 1
+        if (last_record is not None and last_record.entity is not None)
+        else ds.entity_minimum
+    )
+
+    return entity

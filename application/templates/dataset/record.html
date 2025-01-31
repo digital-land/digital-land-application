@@ -14,7 +14,7 @@
                 </h2>
                 <div class="app-summary-card__actions">
                     {%- if AUTHENTICATED %}
-                        <a href="#" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
+                        <a href="{{ url_for('dataset.edit_record', dataset=record.dataset.dataset, reference=record.reference) }}" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
                     {%- endif %}
                 </div>
             </header>

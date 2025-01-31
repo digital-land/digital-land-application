@@ -13,7 +13,7 @@ from application.forms.forms import (
 
 class FormBuilder:
 
-    def __init__(self, fields, additional_skip_fields=None):
+    def __init__(self, fields, additional_skip_fields=None, obj=None):
         skip_fields = {
             "entity",
             "prefix",
@@ -28,6 +28,7 @@ class FormBuilder:
         for field in fields:
             if field.field not in skip_fields:
                 self.fields.append(field)
+        self.obj = obj
 
     def build(self):
         TheForm = DynamicForm
@@ -155,7 +156,7 @@ class FormBuilder:
                         StringField(label=field.name, validators=[Optional()]),
                     )
 
-        form = TheForm(sorted_fields=self.sorted_fields())
+        form = TheForm(sorted_fields=self.sorted_fields(), obj=self.obj)
         return form
 
     def sorted_fields(self):
