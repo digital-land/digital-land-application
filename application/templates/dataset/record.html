@@ -14,7 +14,7 @@
                 </h2>
                 <div class="app-summary-card__actions">
                     {%- if AUTHENTICATED %}
-                        <a href="#" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
+                        <a href="{{ url_for('dataset.edit_record', dataset=record.dataset.dataset, reference=record.reference) }}" class="govuk-link">Edit<span class="govuk-visually-hidden"> record</span></a>
                     {%- endif %}
                 </div>
             </header>
@@ -65,7 +65,7 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-three-quarters">
                 <h2 class="govuk-heading-m">{{ related_dataset.name | capitalize }}</h2>
-                {% for r in record.related_records %}
+                {% for r in record.get_related_by_dataset(related_dataset.dataset) %}
                     <section class="app-summary-card">
                         <header class="app-summary-card__header">
                             <h2 class="app-summary-card__title">{{ related_dataset.name | title }}</h2>
@@ -112,7 +112,7 @@
                         </div>
                     </section>
                 {% endfor %}
-                <a href="#" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ related_dataset.name }}</a>
+                <a href="{{ url_for('dataset.add_related', dataset=record.dataset.dataset, reference=record.reference, related_dataset=related_dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ related_dataset.name }}</a>
                 <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
             </div>
         </div>

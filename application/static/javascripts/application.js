@@ -65,26 +65,30 @@
     this.$module = $module;
   }
 
-
   MultiSelect.prototype.init = function (params) {
-    this.setupOptions(params);
     // get the original form field that needs to be kept updated
     this.$formGroup = this.$module.querySelector('[data-multi-select="form-group"]');
     this.$input = this.$formGroup.querySelector('input');
+
+    // Setup options first so we can use the field label
+    this.setupOptions(params);
+
+    // Initialize currentlySelected array
+    this.currentlySelected = [];
 
     // get the options from a hidden select element
     this.$hiddenSelect = this.$module.querySelector('[data-multi-select="select"]');
     this.selectOptions = utils.getSelectOptions(this.$hiddenSelect);
     this.selectOptionLabels = this.selectOptions.map(($option) => $option[0]);
 
-    // get the initial set of selections from existing input
-    this.currentlySelected = [];
-    this.initiallySelected();
-
-    // set up a type ahead component
+    // set up a type ahead component first
     this.setUpTypeAhead();
+
     // setup area to display selected
     this.setupSelectedPanel();
+
+    // get and display the initial set of selections
+    this.initiallySelected();
 
     // hide the original form element
     this.$formGroup.classList.add(this.options.hiddenClass);
@@ -157,45 +161,68 @@
     this.updatePanelContent();
   };
 
-  MultiSelect.prototype.createSelectedPanel = function () {
-    const $panel = document.createElement('div');
-    $panel.classList.add('multi-select__select-panel');
-
-    const $heading = document.createElement('h4');
-    $heading.classList.add('govuk-heading-s');
-    $heading.textContent = `Selected ${this.options.nameOfThingSelecting}`;
-    const $selectedList = document.createElement('ul');
-
-    const $noSelectionText = document.createElement('p');
-    $noSelectionText.classList.add('govuk-hint');
-    $noSelectionText.textContent = 'No selections made';
-
-    $panel.append($heading);
-    $panel.append($selectedList);
-    $panel.append($noSelectionText);
-    return $panel
-  };
-
   MultiSelect.prototype.displaySelected = function () {
-    if (this.currentlySelected.length) {
-      this.currentlySelected.forEach(function (selection) {
-        const option = this.findOption(selection, 'value');
-        this.displaySelectedItem(option[0]);
-      }.bind(this));
+    // Clear any existing content
+    while (this.$selectedPanel.firstChild) {
+      this.$selectedPanel.removeChild(this.$selectedPanel.firstChild);
     }
-    this.updatePanelContent();
+
+    // Display any pre-existing selections
+    if (this.currentlySelected.length) {
+      this.$selectedPanel.classList.remove('multi-select__select-panel--none');
+      this.$selectedPanel.classList.add('multi-select__select-panel--selection');
+
+      const heading = document.createElement('h4');
+      heading.className = 'govuk-heading-s';
+      heading.textContent = `Selected ${this.options.nameOfThingSelecting}`;
+      this.$selectedPanel.appendChild(heading);
+
+      const ul = document.createElement('ul');
+      this.currentlySelected.forEach(value => {
+        const option = this.findOption(value, 'value');
+        if (option && option.length) {
+          const li = this.createSelectedItem(option[0]);
+          ul.appendChild(li);
+        }
+      });
+      this.$selectedPanel.appendChild(ul);
+    } else {
+      this.$selectedPanel.classList.add('multi-select__select-panel--none');
+      this.$selectedPanel.classList.remove('multi-select__select-panel--selection');
+      const p = document.createElement('p');
+      p.className = 'govuk-hint';
+      p.textContent = 'No selections made';
+      this.$selectedPanel.appendChild(p);
+    }
   };
 
   MultiSelect.prototype.displaySelectedItem = function (option) {
-    console.log(option);
-    const $list = this.$selectedPanel.querySelector('ul');
-    $list.append(this.createSelectedItem(option));
+    if (!this.$selectedPanel) {
+      this.setupSelectedPanel();
+    }
+
+    // Create list if it doesn't exist
+    if (!this.$selectedPanel.querySelector('ul')) {
+      const heading = document.createElement('h4');
+      heading.className = 'govuk-heading-s';
+      heading.textContent = `Selected ${this.options.nameOfThingSelecting}`;
+      this.$selectedPanel.appendChild(heading);
+
+      const ul = document.createElement('ul');
+      this.$selectedPanel.appendChild(ul);
+    }
+
+    const ul = this.$selectedPanel.querySelector('ul');
+    const li = this.createSelectedItem(option);
+    ul.appendChild(li);
     this.updatePanelContent();
   };
 
-  MultiSelect.prototype.findOption = function (query, _type) {
-    const tupleIndx = (_type === 'value') ? 1 : 0;
-    return this.selectOptions.filter(opt => opt[tupleIndx] === query)
+  MultiSelect.prototype.findOption = function (value, type) {
+    if (type === 'name') {
+      return this.selectOptions.filter(option => option[0].toLowerCase() === value.toLowerCase())
+    }
+    return this.selectOptions.filter(option => option[1] === value)
   };
 
   MultiSelect.prototype.getSelectionsFromString = function (str) {
@@ -216,14 +243,28 @@
   };
 
   MultiSelect.prototype.initiallySelected = function () {
-    const inputString = this.$input.value;
-    this.currentlySelected = this.getSelectionsFromString(inputString);
+    // Get the value from the input's value attribute, not its current value
+    const inputString = this.$input.getAttribute('value') || this.$input.value || '';
+    if (inputString) {
+      this.currentlySelected = this.getSelectionsFromString(inputString);
+      // Panel should already exist at this point
+      this.displaySelected();
+    }
   };
 
   MultiSelect.prototype.setupSelectedPanel = function () {
-    this.$selectedPanel = this.createSelectedPanel();
-    this.$module.append(this.$selectedPanel);
-    this.displaySelected();
+    // Create the panel if it doesn't exist
+    if (!this.$selectedPanel) {
+      this.$selectedPanel = document.createElement('div');
+      this.$selectedPanel.className = 'multi-select__select-panel multi-select__select-panel--none';
+      // Insert after the typeahead container
+      this.$typeAheadContainer.parentNode.insertBefore(this.$selectedPanel, this.$typeAheadContainer.nextSibling);
+    }
+    // Initialize with empty state
+    const p = document.createElement('p');
+    p.className = 'govuk-hint';
+    p.textContent = 'No selections made';
+    this.$selectedPanel.appendChild(p);
   };
 
   MultiSelect.prototype.setUpTypeAhead = function () {
@@ -241,7 +282,11 @@
   };
 
   MultiSelect.prototype.updatePanelContent = function () {
-    console.log('update panel content');
+    // Ensure currentlySelected exists
+    if (!this.currentlySelected) {
+      this.currentlySelected = [];
+    }
+
     // if no items selected then show no selection msg
     if (this.currentlySelected.length > 0) {
       this.$selectedPanel.classList.remove('multi-select__select-panel--none');
@@ -256,7 +301,11 @@
     params = params || {};
     this.options = {};
     this.options.separator = params.separator || ';';
-    this.options.nameOfThingSelecting = params.nameOfThingSelecting || 'organistions';
+
+    // Get the field label text to use as the name of thing being selected
+    const fieldLabel = this.$formGroup.querySelector('label').textContent.toLowerCase();
+    this.options.nameOfThingSelecting = params.nameOfThingSelecting || fieldLabel || 'items';
+
     this.options.hiddenClass = params.hiddenClass || 'app-hidden';
     this.options.emptyInputOnConfirm = params.emptyInputOnConfirm || true;
   };

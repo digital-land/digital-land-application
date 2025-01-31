@@ -1,0 +1,66 @@
+{% extends 'layouts/base.html' %}
+
+{% block head %}
+  {{ super() }}
+  <script type="text/javascript" src="{{ assetPath | default('/static') }}/javascripts/vendor/accessible-autocomplete.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <span class="govuk-caption-l">{{ dataset.name | capitalize }}</span>
+    {% if form %}
+      {% if action == "edit" %}
+        <h1 class="govuk-heading-l">Edit record</h1>
+      {% else %}
+        <h1 class="govuk-heading-l">Add record</h1>
+      {% endif %}
+      <form action="{{ form_action }}" method="post">
+        {{ form.hidden_tag() }}
+        {% for field in form.ordered_fields() %}
+          <div class="govuk-form-group">
+            {% if field.render_kw and field.render_kw.get('data-multi-select') == 'input' %}
+              <div class="app-multi-select" data-module="multi-select">
+                <div data-multi-select="form-group">
+                  {{ field.label(class="govuk-label") }}
+                  {{ field(class="govuk-input") }}
+                </div>
+                <div class="app-hidden">
+                  <select name="{{ field.name }}_select" id="{{ field.name }}_select" data-multi-select="select">
+                    {% for value, label in field.render_kw.get('choices') %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            {% else %}
+              {{ field.label(class="govuk-label") }}
+              {{ field(class="govuk-input") }}
+            {% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="govuk-button">Save</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block bodyScriptsEnd %}
+  {{ super() }}
+  <script>
+    // Initialize multi-select for fields with data-module="multi-select"
+    document.querySelectorAll('[data-module="multi-select"]').forEach(function($module) {
+      new window.dptp.MultiSelect($module).init()
+    })
+
+    // Initialize accessible-autocomplete for single select fields
+    document.querySelectorAll('select.govuk-select').forEach(function(select) {
+      const selectedName = select.getAttribute('data-selected-name');
+      accessibleAutocomplete.enhanceSelectElement({
+        selectElement: select,
+        defaultValue: selectedName || select.options[select.selectedIndex]?.text || ''
+      })
+    })
+  </script>
+{% endblock %}
