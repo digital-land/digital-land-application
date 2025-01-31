@@ -217,3 +217,83 @@ def edit_record(dataset, reference):
             "dataset.edit_record", dataset=ds.dataset, reference=r.reference
         ),
     )
+
+
+@ds.route(
+    "/<string:dataset>/<string:reference>/<string:related_dataset>/add",
+    methods=["GET", "POST"],
+)
+def add_related(dataset, reference, related_dataset):
+    ds = Dataset.query.get_or_404(dataset)
+    related_ds = Dataset.query.get_or_404(related_dataset)
+    r = Record.query.get_or_404((reference, ds.dataset))
+
+    builder = FormBuilder(
+        related_ds.fields,
+        parent_dataset=related_ds.parent,
+        parent_reference=r.reference,
+    )
+    form = builder.build()
+
+    breadcrumbs = {
+        "items": [
+            {"text": "Home", "href": url_for("main.index")},
+            {
+                "text": ds.name.capitalize(),
+                "href": url_for("dataset.dataset", dataset=ds.dataset),
+            },
+            {
+                "text": r.reference,
+                "href": url_for(
+                    "dataset.record", dataset=ds.dataset, reference=r.reference
+                ),
+            },
+            {"text": related_ds.name.capitalize()},
+            {"text": "Add"},
+        ]
+    }
+
+    if form.validate_on_submit():
+        data = form.data
+        if "csrf_token" in data:
+            del data["csrf_token"]
+
+        record_model = RecordModel.from_form_data(data, related_ds.fields)
+        entity = next_entity(related_ds)
+
+        try:
+            validated_data = record_model.model_dump(
+                by_alias=True, exclude={"fields": True}
+            )
+            record = create_record(entity, validated_data, related_ds)
+            r.related_records.append(record)
+            db.session.add(r)
+            db.session.commit()
+            flash("Record added")
+            return redirect(
+                url_for(
+                    "dataset.record",
+                    dataset=related_ds.dataset,
+                    reference=record.reference,
+                )
+            )
+        except ValidationError as e:
+            for error in e.errors():
+                field = error["loc"][0]
+                message = error["msg"]
+                if hasattr(form, field):
+                    getattr(form, field).errors = [message]
+
+    return render_template(
+        "dataset/add-edit-record.html",
+        dataset=related_ds,
+        breadcrumbs=breadcrumbs,
+        form=form,
+        action="add",
+        form_action=url_for(
+            "dataset.add_related",
+            dataset=ds.dataset,
+            reference=r.reference,
+            related_dataset=related_ds.dataset,
+        ),
+    )

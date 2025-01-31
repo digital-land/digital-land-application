@@ -14,7 +14,13 @@ from application.forms.forms import (
 class FormBuilder:
 
     def __init__(
-        self, fields, inactive_fields=None, additional_skip_fields=None, obj=None
+        self,
+        fields,
+        inactive_fields=None,
+        additional_skip_fields=None,
+        obj=None,
+        parent_dataset=None,
+        parent_reference=None,  # Only need parent_reference
     ):
         skip_fields = {
             "entity",
@@ -38,9 +44,17 @@ class FormBuilder:
         ]
         self.obj = obj
         self.inactive_fields = inactive_fields or []
+        self.parent_dataset = parent_dataset
+        self.parent_reference = parent_reference
 
     def get_field_value(self, field_name):
         """Helper to get value from obj, handling special cases"""
+
+        # If this field matches the dataset name and we have a parent reference
+        if field_name == self.parent_dataset and self.parent_reference:
+            self.inactive_fields.append(field_name)
+            return self.parent_reference
+
         if not self.obj:
             return None
 
@@ -82,7 +96,7 @@ class FormBuilder:
             if field.field in self.inactive_fields:
                 render_kw["disabled"] = True
                 render_kw["data-hint"] = (
-                    "This field is read only because it is linked to another record"
+                    "This field is read only as it's the link another record"
                 )
 
             if field.category_reference is not None:
@@ -125,17 +139,33 @@ class FormBuilder:
                 choices.extend([(org.organisation, org.name) for org in organisations])
 
                 if field.cardinality == "n":
+                    # For multi-select, convert organizations to semicolon-separated string
+                    initial_value = ""
+                    if hasattr(self.obj, "organisations"):
+                        initial_value = ";".join(
+                            org.organisation for org in self.obj.organisations
+                        )
+
                     field_obj = StringField(
                         field.name,
-                        default=field_value,
                         render_kw={
                             "data-multi-select": "input",
                             "data-hint": f"Start typing {field.name.lower()} to see suggestions",
                             "choices": choices,
+                            "value": initial_value,  # Set as attribute, not as value
                             **render_kw,
                         },
                     )
                     setattr(TheForm, field.field, field_obj)
+
+                    # Add hidden select for JS component
+                    setattr(
+                        TheForm,
+                        f"{field.field}_select",
+                        SelectField(
+                            choices=choices, render_kw={"data-multi-select": "select"}
+                        ),
+                    )
                 else:
                     # For single organization, find the display name for the selected value
                     selected_name = ""

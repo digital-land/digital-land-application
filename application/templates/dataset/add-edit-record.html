@@ -7,108 +7,60 @@
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-three-quarters">
+  <div class="govuk-grid-column-two-thirds">
     <span class="govuk-caption-l">{{ dataset.name | capitalize }}</span>
-    <h1 class="govuk-heading-l">{{ action | capitalize }} record</h1>
+    {% if form %}
+      {% if action == "edit" %}
+        <h1 class="govuk-heading-l">Edit record</h1>
+      {% else %}
+        <h1 class="govuk-heading-l">Add record</h1>
+      {% endif %}
+      <form action="{{ form_action }}" method="post">
+        {{ form.hidden_tag() }}
+        {% for field in form.ordered_fields() %}
+          <div class="govuk-form-group">
+            {% if field.render_kw and field.render_kw.get('data-multi-select') == 'input' %}
+              <div class="app-multi-select" data-module="multi-select">
+                <div data-multi-select="form-group">
+                  {{ field.label(class="govuk-label") }}
+                  {{ field(class="govuk-input") }}
+                </div>
+                <div class="app-hidden">
+                  <select name="{{ field.name }}_select" id="{{ field.name }}_select" data-multi-select="select">
+                    {% for value, label in field.render_kw.get('choices') %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            {% else %}
+              {{ field.label(class="govuk-label") }}
+              {{ field(class="govuk-input") }}
+            {% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="govuk-button">Save</button>
+      </form>
+    {% endif %}
   </div>
 </div>
-{% if error_list %}
-  {{ govukErrorSummary({
-      "titleText": "There is a problem",
-      "errorList": error_list
-    })
-  }}
-{% endif %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-  <form method="POST" action="{{ form_action }}">
-    <div class="govuk-form-group">
-      {{ form.hidden_tag() }}
-      <fieldset class="govuk-fieldset">
-        {% for field in form.ordered_fields() %}
-            <div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
-              {% if field.render_kw and field.render_kw.get('data-multi-select') == 'input' %}
-                <div class="app-multi-select" data-module="multi-select">
-                  <div class="govuk-form-group" data-multi-select="form-group">
-                    {{ field.label(class="govuk-label") }}
-                    <div id="hint-{{ field.name }}" class="govuk-hint">Start typing to see suggestions</div>
-                    {{ field(class="govuk-input", **{'aria-describedby': 'hint-' ~ field.name}) }}
-                  </div>
-                  <div class="app-hidden">
-                    <select name="{{ field.name }}_select" id="{{ field.name }}_select" data-multi-select="select">
-                      {% for value, label in field.render_kw.get('choices') %}
-                        <option value="{{ value }}">{{ label }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-              {% elif field.type == "DatePartField" %}
-                {{ field }}
-              {% elif field.type == "TextAreaField" %}
-                {{ field.label(class="govuk-label") }}
-                {% if field.render_kw and field.render_kw.get('data-hint') %}
-                  <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
-                {% endif %}
-                {{ field(class="govuk-textarea", rows="8") }}
-              {% elif field.type == "SelectField" %}
-                {{ field.label(class="govuk-label") }}
-                <div id="hint-{{ field.name }}" class="govuk-hint">Start typing to see suggestions</div>
-                {{ field(class="govuk-select", **{'aria-describedby': 'hint-' ~ field.name}) }}
-              {% else %}
-                {{ field.label(class="govuk-label") }}
-                {% if field.render_kw and field.render_kw.get('data-hint') %}
-                  <div id="hint-{{ field.name }}" class="govuk-hint">{{ field.render_kw.get('data-hint') }}</div>
-                {% endif %}
-                {{ field(class="govuk-input") }}
-              {% endif %}
-              {% if field.type != "DatePartField" and field.errors %}
-                  <div>
-                      {% for error in field.errors %}
-                          <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
-                      {% endfor %}
-                  </div>
-              {% endif %}
-          </div>
-      {% endfor %}
-    </fieldset>
-    </div>
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--invisible">
-    <div class="govuk-button-group">
-      {{
-        govukButton({
-          "text": action | capitalize ~ " record",
-          "type": "submit"
-        })
-      }}
-      {% if action == "edit" %}
-        <a href="{{ url_for('dataset.record', dataset=dataset.dataset, reference=record.reference) }}" class="govuk-button govuk-button--secondary">Cancel</a>
-      {% endif %}
-    </div>
-  </form>
-</div>
-{% endblock content %}
+{% endblock %}
 
-{% block digitalLandScripts -%}
+{% block bodyScriptsEnd %}
   {{ super() }}
   <script>
-    // Initialize multi-select for fields with cardinality n
+    // Initialize multi-select for fields with data-module="multi-select"
     document.querySelectorAll('[data-module="multi-select"]').forEach(function($module) {
       new window.dptp.MultiSelect($module).init()
     })
 
     // Initialize accessible-autocomplete for single select fields
     document.querySelectorAll('select.govuk-select').forEach(function(select) {
-      // Get the pre-selected display name if it exists
       const selectedName = select.getAttribute('data-selected-name');
-
       accessibleAutocomplete.enhanceSelectElement({
         selectElement: select,
         defaultValue: selectedName || select.options[select.selectedIndex]?.text || ''
       })
     })
   </script>
-{%- endblock %}
-
-{% block bodyScriptsEnd %}
-  {{ super() }}
 {% endblock %}

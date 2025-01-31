@@ -9,6 +9,8 @@ from application.extensions import db
 
 def cross_dataset_reference_validator(dataset_name: str, value: str) -> str:
     # Check if value exists as a reference in the target dataset
+    if value.strip() == "":
+        return value
     stmt = select(Record).where(
         Record.dataset_id == dataset_name, Record.reference == value
     )

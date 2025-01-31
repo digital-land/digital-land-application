@@ -112,7 +112,7 @@
                         </div>
                     </section>
                 {% endfor %}
-                <a href="#" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ related_dataset.name }}</a>
+                <a href="{{ url_for('dataset.add_related', dataset=record.dataset.dataset, reference=record.reference, related_dataset=related_dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span> Add {{ related_dataset.name }}</a>
                 <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
             </div>
         </div>
