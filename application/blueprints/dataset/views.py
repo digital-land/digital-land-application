@@ -94,7 +94,7 @@ def add_record(dataset):
                 del data["csrf_token"]
 
             # Bind form data to Pydantic model
-            record_model = RecordModel.from_form_data(data, ds.fields)
+            record_model = RecordModel.from_data(data, ds.fields)
 
             # Get last record for its entity ID
             entity = next_entity(ds)
@@ -194,7 +194,7 @@ def edit_record(dataset, reference):
             del data["csrf_token"]
 
         # Bind form data to Pydantic model
-        record_model = RecordModel.from_form_data(data, ds.fields)
+        record_model = RecordModel.from_data(data, ds.fields)
         validated_data = record_model.model_dump(
             by_alias=True, exclude={"fields": True}
         )
@@ -266,7 +266,7 @@ def add_related(dataset, reference, related_dataset):
         if "csrf_token" in data:
             del data["csrf_token"]
 
-        record_model = RecordModel.from_form_data(data, related_ds.fields)
+        record_model = RecordModel.from_data(data, related_ds.fields)
         entity = next_entity(related_ds)
 
         try:

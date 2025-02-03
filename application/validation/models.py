@@ -75,7 +75,7 @@ class RecordModel(BaseModel):
         return model
 
     @classmethod
-    def from_form_data(
+    def from_data(
         cls, form_data: dict[str, Any], fields: list[FieldModel]
     ) -> "RecordModel":
         # Extract and map form data to RecordModel

@@ -40,12 +40,10 @@ def register_errorhandlers(app):
 
 def register_blueprints(app):
     from application.blueprints.dataset.views import ds
-    from application.blueprints.explore.views import explore
     from application.blueprints.main.views import main
 
     app.register_blueprint(main)
     app.register_blueprint(ds)
-    app.register_blueprint(explore)
 
 
 def register_templates(app):

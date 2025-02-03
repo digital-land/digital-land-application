@@ -58,9 +58,6 @@
             <a href="{{ url_for('main.index') }}" class="govuk-header__link">Home</a>
           </li>
           <li class="govuk-header__navigation-item">
-            <a href="{{ url_for('explore.index') }}" class="govuk-header__link">Explore data</a>
-          </li>
-          <li class="govuk-header__navigation-item">
             {% if AUTHENTICATED %}
             <a class="govuk-header__link" href="#">
               Sign out

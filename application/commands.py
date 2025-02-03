@@ -5,6 +5,7 @@ import click
 import requests
 from flask.cli import AppGroup
 
+from application.blueprints.dataset.utils import create_record
 from application.database.models import (
     Category,
     CategoryValue,
@@ -16,6 +17,7 @@ from application.database.models import (
     dataset_field,
 )
 from application.extensions import db
+from application.validation.models import RecordModel
 
 DATASETTE_URL = "https://datasette.planning.data.gov.uk"
 DIGTAL_LAND_DB_URL = f"{DATASETTE_URL}/digital-land"
@@ -32,11 +34,6 @@ CATEGORY_VALUES_URL = (
 specification_cli = AppGroup("specification")
 
 
-# def _get_category_datasets():
-#     print("Getting category datasets")
-#     return _get(CATEGORY_DATASETS_URL)
-
-
 def _get_specification(specification):
     print(f"Getting specification for {specification}")
     url = (
@@ -45,10 +42,41 @@ def _get_specification(specification):
     return _get(url)
 
 
-@specification_cli.command("import")
+@specification_cli.command("seed-data")
+@click.argument("reference")
+@click.option(
+    "--max",
+    default=100,
+    type=click.IntRange(1, 100),
+    help="Maximum number of parent datasets to process (max 100)",
+)
+def get_seed_data(reference, max):
+    print(f"Getting seed data for {reference}")
+    spec = Specification.query.get(reference)
+    if spec is None:
+        print(f"Specification {reference} not found")
+        return sys.exit(1)
+
+    url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_limit={max}"
+    data = _get(url)
+    fields = [field.field for field in spec.parent_dataset.fields]
+    for d in data:
+        load_data = {}
+        for key, value in d.items():
+            k = key.replace("_", "-")
+            if k in fields:
+                load_data[k] = value
+        model = RecordModel.from_data(load_data, spec.parent_dataset.fields)
+        validated_data = model.model_dump(by_alias=True, exclude={"fields": True})
+        record = create_record(d["entity"], validated_data, spec.parent_dataset)
+        db.session.add(record)
+    db.session.commit()
+
+
+@specification_cli.command("init")
 @click.argument("reference")
 @click.option("--parent", default=None, help="Parent dataset")
-def import_data(reference, parent):
+def init_specification(reference, parent):
     spec = Specification.query.all()
     if len(spec) > 0:
         print(

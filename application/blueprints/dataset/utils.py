@@ -54,16 +54,19 @@ def set_record_data(validated_data, record):
 
 
 def _collect_date_fields(data):
-    year = data.get("year")
-    month = data.get("month")
-    day = data.get("day")
-    if year and month and day:
-        return f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}"
-    elif year and month:
-        return f"{year}-{str(month).zfill(2)}"
-    elif year:
-        return year
-    return None
+    if isinstance(data, dict):
+        year = data.get("year")
+        month = data.get("month")
+        day = data.get("day")
+        if year and month and day:
+            return f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}"
+        elif year and month:
+            return f"{year}-{str(month).zfill(2)}"
+        elif year:
+            return year
+        return None
+    else:
+        return data
 
 
 def next_entity(ds):
