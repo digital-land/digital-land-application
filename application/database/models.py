@@ -246,6 +246,18 @@ class Record(DateModel):
         ),
     )
 
+    def to_dict(self):
+        data = {}
+        for field in self.dataset.fields:
+            attr = field.field.replace("-", "_")
+            if hasattr(self, attr):
+                data[field.field] = getattr(self, attr)
+            elif field.field in self.data:
+                data[field.field] = self.data.get(field.field)
+            else:
+                data[field.field] = None
+        return data
+
     def get(self, field):
         if hasattr(self, field):
             return getattr(self, field)

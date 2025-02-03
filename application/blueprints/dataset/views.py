@@ -1,4 +1,15 @@
-from flask import Blueprint, flash, redirect, render_template, url_for
+from csv import DictWriter
+from io import StringIO
+
+from flask import (
+    Blueprint,
+    abort,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    url_for,
+)
 from pydantic import ValidationError
 
 from application.blueprints.dataset.utils import (
@@ -51,6 +62,29 @@ def records(dataset):
         page=page,
         sub_navigation=None,
     )
+
+
+@ds.route("/<string:dataset>.csv")
+def csv(dataset):
+    ds = Dataset.query.get_or_404(dataset)
+    if ds.records:
+        output = StringIO()
+        fieldnames = [field.field for field in ds.ordered_fields()]
+        writer = DictWriter(output, fieldnames)
+        writer.writeheader()
+
+        for record in ds.records:
+            writer.writerow(record.to_dict())
+
+        csv_output = output.getvalue().encode("utf-8")
+        response = make_response(csv_output)
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={ds.dataset}.csv"
+        )
+        response.headers["Content-Type"] = "text/csv; charset=utf-8"
+        return response
+    else:
+        abort(404)
 
 
 @ds.route("/<string:dataset>/add", methods=["GET", "POST"])

@@ -84,7 +84,7 @@
             </tbody>
           </table>
         </section>
-        <p class="govuk-body govuk-!-margin-top-3"><a href="#">Download a csv file of this data</a></p>
+        <p class="govuk-body govuk-!-margin-top-3"><a href="{{ url_for('dataset.csv', dataset=dataset.dataset) }}">Download a csv file of this data</a></p>
         {% else %}
           {{
             govukInsetText({

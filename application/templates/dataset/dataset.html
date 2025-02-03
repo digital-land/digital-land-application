@@ -110,7 +110,7 @@
         <p class="govuk-hint govuk-!-font-size-14">View as a table or download a csv file</p>
         <ul class="govuk-list">
           <li><a href="{{ url_for('dataset.records', dataset=dataset.dataset) }}" class="govuk-link govuk-!-font-size-16">View as table</a></li>
-          <li><a href="{{ url_for('dataset.records', dataset=dataset.dataset) }}" class="govuk-link govuk-!-font-size-16">Download csv</a></li>
+          <li><a href="{{ url_for('dataset.csv', dataset=dataset.dataset) }}" class="govuk-link govuk-!-font-size-16">Download csv</a></li>
         </ul>
       </div>
     </div>
