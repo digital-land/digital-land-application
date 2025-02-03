@@ -228,10 +228,18 @@ def add_related(dataset, reference, related_dataset):
     related_ds = Dataset.query.get_or_404(related_dataset)
     r = Record.query.get_or_404((reference, ds.dataset))
 
+    # Get organization data from parent record if it exists
+    parent_org_data = {}
+    if hasattr(r, "organisation") and r.organisation:
+        parent_org_data["organisation"] = r.organisation.organisation
+    if hasattr(r, "organisations") and r.organisations:
+        parent_org_data["organisations"] = r.organisations
+
     builder = FormBuilder(
         related_ds.fields,
         parent_dataset=related_ds.parent,
         parent_reference=r.reference,
+        parent_org_data=parent_org_data,
     )
     form = builder.build()
 

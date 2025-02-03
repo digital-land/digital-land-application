@@ -20,7 +20,8 @@ class FormBuilder:
         additional_skip_fields=None,
         obj=None,
         parent_dataset=None,
-        parent_reference=None,  # Only need parent_reference
+        parent_reference=None,
+        parent_org_data=None,
     ):
         skip_fields = {
             "entity",
@@ -46,6 +47,7 @@ class FormBuilder:
         self.inactive_fields = inactive_fields or []
         self.parent_dataset = parent_dataset
         self.parent_reference = parent_reference
+        self.parent_org_data = parent_org_data or {}
 
     def get_field_value(self, field_name):
         """Helper to get value from obj, handling special cases"""
@@ -54,6 +56,18 @@ class FormBuilder:
         if field_name == self.parent_dataset and self.parent_reference:
             self.inactive_fields.append(field_name)
             return self.parent_reference
+
+        # Check for organization data from parent if no obj exists
+        if not self.obj and self.parent_org_data:
+            if field_name == "organisation" and "organisation" in self.parent_org_data:
+                return self.parent_org_data["organisation"]
+            elif (
+                field_name == "organisations"
+                and "organisations" in self.parent_org_data
+            ):
+                return ";".join(
+                    org.organisation for org in self.parent_org_data["organisations"]
+                )
 
         if not self.obj:
             return None

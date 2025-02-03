@@ -2,9 +2,13 @@
 
 {% block content %}
 
+    <span class="govuk-caption-l">{{ dataset.name | capitalize }}</span>
+    <h1 class="govuk-heading-l">{{ dataset.name | capitalize }} records</h1>
+
+
   <div class="app-grid-row app-grid-row--space-between govuk-!-margin-bottom-3">
     <div class="app-grid-column">
-      {% if dataset.records | length > 0 %}
+      {% if not dataset.parent and dataset.records | length > 0 %}
         {% if AUTHENTICATED %}
           {{
             buttonMenu({
@@ -20,6 +24,8 @@
             })
           }}
         {% endif %}
+      {% else %}
+        <p class="govuk-body govuk-!-margin-top-3"><a href="{{ url_for('dataset.dataset', dataset=dataset.parent) }}">To add records, find or create a {{ dataset.parent }} first</a></p>
       {% endif %}
     </div>
     <div class="app-grid-column">
@@ -79,19 +85,12 @@
           </table>
         </section>
         <p class="govuk-body govuk-!-margin-top-3"><a href="#">Download a csv file of this data</a></p>
-        {% if AUTHENTICATED %}
-          <p class="govuk-body govuk-!-margin-top-3"><a href="#">Upload a csv
-            file of updates for this dataset</a></p>
-        {% endif %}
         {% else %}
           {{
             govukInsetText({
               'text': 'There are no records for the ' + dataset.name + ' dataset'
             })
           }}
-          {% if AUTHENTICATED %}
-            <p class="govuk-body govuk-!-margin-top-3"><a href="#">Upload a csv file for this dataset</a></p>
-          {% endif %}
           {% if AUTHENTICATED %}
             <a href="{{ url_for('dataset.add_record', dataset=dataset.dataset) }}" class="govuk-button govuk-button--secondary"><span class="govuk-!-margin-right-1">✚ </span>Add record</a>
           {% else %}
