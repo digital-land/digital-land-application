@@ -11,10 +11,11 @@ from flask import (
     url_for,
 )
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from application.blueprints.dataset.utils import (
     create_record,
-    next_entity,
+    get_next_entity,
     update_record,
 )
 from application.database.models import Dataset, Record
@@ -130,12 +131,12 @@ def add_record(dataset):
             # Bind form data to Pydantic model
             record_model = RecordModel.from_data(data, ds.fields)
 
-            # Get last record for its entity ID
-            entity = next_entity(ds)
-            if not (ds.entity_minimum <= entity <= ds.entity_maximum):
-                flash(
-                    f"entity id {entity} is outside of range {ds.entity_minimum} to {ds.entity_maximum}"
-                )
+            try:
+                entity = get_next_entity(ds)
+            except SQLAlchemyError as e:
+                if "exceeds sequence" in str(e):
+                    flash(f"No more entity IDs available for {ds.dataset}")
+                db.session.rollback()
                 return redirect(url_for("dataset.dataset", dataset=ds.dataset))
 
             # Use validated data from Pydantic model
@@ -179,10 +180,10 @@ def add_record(dataset):
     )
 
 
-@ds.route("/<string:dataset>/<string:reference>")
-def record(dataset, reference):
+@ds.route("/<string:dataset>/<string:entity>")
+def record(dataset, entity):
     ds = Dataset.query.get_or_404(dataset)
-    r = Record.query.get_or_404((reference, ds.dataset))
+    r = Record.query.get_or_404((entity, ds.dataset))
 
     breadcrumbs = {
         "items": [
@@ -197,10 +198,10 @@ def record(dataset, reference):
     return render_template("dataset/record.html", record=r, breadcrumbs=breadcrumbs)
 
 
-@ds.route("/<string:dataset>/<string:reference>/edit", methods=["GET", "POST"])
-def edit_record(dataset, reference):
+@ds.route("/<string:dataset>/<string:entity>/edit", methods=["GET", "POST"])
+def edit_record(dataset, entity):
     ds = Dataset.query.get_or_404(dataset)
-    r = Record.query.get_or_404((reference, ds.dataset))
+    r = Record.query.get_or_404((entity, ds.dataset))
 
     breadcrumbs = {
         "items": [
@@ -209,7 +210,7 @@ def edit_record(dataset, reference):
                 "text": ds.name.capitalize(),
                 "href": url_for("dataset.dataset", dataset=ds.dataset),
             },
-            {"text": r.reference},
+            {"text": r.entity},
             {"text": "Edit"},
         ]
     }
@@ -236,9 +237,7 @@ def edit_record(dataset, reference):
         db.session.add(record)
         db.session.commit()
         flash("Record updated")
-        return redirect(
-            url_for("dataset.record", dataset=ds.dataset, reference=r.reference)
-        )
+        return redirect(url_for("dataset.record", dataset=ds.dataset, entity=r.entity))
 
     return render_template(
         "dataset/add-edit-record.html",
@@ -247,20 +246,18 @@ def edit_record(dataset, reference):
         breadcrumbs=breadcrumbs,
         form=form,
         action="edit",
-        form_action=url_for(
-            "dataset.edit_record", dataset=ds.dataset, reference=r.reference
-        ),
+        form_action=url_for("dataset.edit_record", dataset=ds.dataset, entity=r.entity),
     )
 
 
 @ds.route(
-    "/<string:dataset>/<string:reference>/<string:related_dataset>/add",
+    "/<string:dataset>/<string:entity>/<string:related_dataset>/add",
     methods=["GET", "POST"],
 )
-def add_related(dataset, reference, related_dataset):
+def add_related(dataset, entity, related_dataset):
     ds = Dataset.query.get_or_404(dataset)
     related_ds = Dataset.query.get_or_404(related_dataset)
-    r = Record.query.get_or_404((reference, ds.dataset))
+    r = Record.query.get_or_404((entity, ds.dataset))
 
     # Get organization data from parent record if it exists
     parent_org_data = {}
@@ -285,13 +282,10 @@ def add_related(dataset, reference, related_dataset):
                 "href": url_for("dataset.dataset", dataset=ds.dataset),
             },
             {
-                "text": r.reference,
-                "href": url_for(
-                    "dataset.record", dataset=ds.dataset, reference=r.reference
-                ),
+                "text": r.entity,
+                "href": url_for("dataset.record", dataset=ds.dataset, entity=r.entity),
             },
-            {"text": related_ds.name.capitalize()},
-            {"text": "Add"},
+            {"text": f"Add {related_ds.name.capitalize()}"},
         ]
     }
 
@@ -301,7 +295,7 @@ def add_related(dataset, reference, related_dataset):
             del data["csrf_token"]
 
         record_model = RecordModel.from_data(data, related_ds.fields)
-        entity = next_entity(related_ds)
+        entity = get_next_entity(related_ds)
 
         try:
             validated_data = record_model.model_dump(
@@ -316,7 +310,7 @@ def add_related(dataset, reference, related_dataset):
                 url_for(
                     "dataset.record",
                     dataset=related_ds.dataset,
-                    reference=record.reference,
+                    entity=record.entity,
                 )
             )
         except ValidationError as e:
@@ -335,7 +329,7 @@ def add_related(dataset, reference, related_dataset):
         form_action=url_for(
             "dataset.add_related",
             dataset=ds.dataset,
-            reference=r.reference,
+            entity=r.entity,
             related_dataset=related_ds.dataset,
         ),
     )

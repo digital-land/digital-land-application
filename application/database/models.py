@@ -200,14 +200,14 @@ class Field(DateModel):
 class Record(DateModel):
     __tablename__ = "record"
 
-    reference: Mapped[str] = mapped_column(Text, primary_key=True)
+    entity: Mapped[int] = mapped_column(db.BigInteger, primary_key=True)
     dataset_id: Mapped[str] = mapped_column(
-        ForeignKey("dataset.dataset", name="fk_dataset_record"), primary_key=True
+        ForeignKey("dataset.dataset"), primary_key=True
     )
     name: Mapped[str] = mapped_column(Text)
-    entity: Mapped[int] = mapped_column(db.BigInteger, nullable=True)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
-    notes: Mapped[str] = mapped_column(Text, nullable=True)
+    reference: Mapped[str] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
     organisation_id: Mapped[Optional[Organisation]] = mapped_column(
         ForeignKey("organisation.organisation", name="fk_organisation_record"),
@@ -221,12 +221,14 @@ class Record(DateModel):
     )
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="records")
 
-    owning_record_reference: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    owning_record_entity: Mapped[Optional[int]] = mapped_column(
+        db.BigInteger, nullable=True
+    )
     owning_record_dataset: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     owning_record: Mapped[Optional["Record"]] = relationship(
         "Record",
-        remote_side=lambda: [Record.reference, Record.dataset_id],
+        remote_side=lambda: [Record.entity, Record.dataset_id],
         back_populates="related_records",
     )
 
@@ -237,10 +239,10 @@ class Record(DateModel):
     )
 
     __table_args__ = (
-        db.PrimaryKeyConstraint("reference", "dataset_id", name="pk_record"),
+        db.PrimaryKeyConstraint("entity", "dataset_id", name="pk_record"),
         ForeignKeyConstraint(
-            ["owning_record_reference", "owning_record_dataset"],
-            ["record.reference", "record.dataset_id"],
+            ["owning_record_entity", "owning_record_dataset"],
+            ["record.entity", "record.dataset_id"],
             ondelete="CASCADE",
             name="fk_record_self_owning_record",
         ),

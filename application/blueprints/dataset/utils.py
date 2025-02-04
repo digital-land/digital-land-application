@@ -1,5 +1,13 @@
+from sqlalchemy import text
+
 from application.database.models import Organisation, Record
 from application.extensions import db
+
+
+def get_next_entity(dataset):
+    sequence_name = f"{dataset.dataset.replace('-', '_')}_entity_seq"
+    result = db.session.execute(text(f"SELECT nextval('{sequence_name}')"))
+    return result.scalar()
 
 
 def make_reference(dataset, entity):

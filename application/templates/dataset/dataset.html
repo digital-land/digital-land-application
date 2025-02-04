@@ -51,7 +51,7 @@
               {{ dataset.name | capitalize }}
             </h2>
             <div class="app-summary-card__actions">
-              <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
+              <a href="{{ url_for('dataset.record', entity=record.entity, dataset=dataset.dataset) }}" class="govuk-link">View<span class="govuk-visually-hidden"> record</span></a>
             </div>
           </header>
           <div class="app-summary-card__body">
@@ -59,8 +59,14 @@
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">Reference</dt>
                 <dd class="govuk-summary-list__value" data-filter="match-content">
-                  <a href="{{ url_for('dataset.record', reference=record.reference, dataset=dataset.dataset) }}"
-                      class="govuk-link govuk-link--text-colour">{{ record.reference }}</a>
+                  {{ record.reference }}
+                </dd>
+              </div>
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">Entity</dt>
+                <dd class="govuk-summary-list__value" data-filter="match-content">
+                  <a href="{{ url_for('dataset.record', entity=record.entity, dataset=dataset.dataset) }}"
+                      class="govuk-link govuk-link--text-colour">{{ record.entity }}</a>
                 </dd>
               </div>
               <div class="govuk-summary-list__row">
@@ -89,7 +95,7 @@
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">{{record.owning_record.dataset.name | capitalize}}</dt>
                   <dd class="govuk-summary-list__value" data-filter="match-content">
-                    <a href="{{ url_for('dataset.record', reference=record.owning_record.reference, dataset=record.owning_record.dataset.dataset) }}" class="govuk-link">{{ record.owning_record.reference }}</a>
+                    <a href="{{ url_for('dataset.record', entity=record.owning_record.entity, dataset=record.owning_record.dataset.dataset) }}" class="govuk-link">{{ record.owning_record.entity }}</a>
                   </dd>
                 </div>
               {% endif %}

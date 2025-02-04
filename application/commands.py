@@ -4,6 +4,7 @@ import sys
 import click
 import requests
 from flask.cli import AppGroup
+from sqlalchemy import text
 
 from application.blueprints.dataset.utils import create_record
 from application.database.models import (
@@ -118,6 +119,13 @@ def init_specification(reference, parent):
 @specification_cli.command("clear")
 def clear_data():
     print("Clearing data")
+
+    # Drop sequences for each dataset
+    for dataset in Dataset.query.all():
+        sequence_name = f"{dataset.dataset.replace('-', '_')}_entity_seq"
+        db.session.execute(text(f"DROP SEQUENCE IF EXISTS {sequence_name}"))
+
+    # Clear all data
     db.session.query(dataset_field).delete()
     db.session.query(Record).delete()
     db.session.query(CategoryValue).delete()
@@ -211,8 +219,25 @@ def _set_entity_minimum_and_maximum():
         url = f"{DIGTAL_LAND_DB_URL}/dataset.json?dataset__exact={dataset.dataset}&_shape=array"
         data = _get(url)
         if data and len(data) > 0:
-            dataset.entity_minimum = data[0]["entity_minimum"]
-            dataset.entity_maximum = data[0]["entity_maximum"]
+            min_entity = data[0]["entity_minimum"]
+            max_entity = data[0]["entity_maximum"]
+            dataset.entity_minimum = min_entity
+            dataset.entity_maximum = max_entity
+
+            # Create sequence for this dataset
+            sequence_name = f"{dataset.dataset.replace('-', '_')}_entity_seq"
+            db.session.execute(
+                text(
+                    f"""
+                CREATE SEQUENCE IF NOT EXISTS {sequence_name}
+                START WITH {min_entity}
+                MINVALUE {min_entity}
+                MAXVALUE {max_entity}
+                NO CYCLE
+            """
+                )
+            )
+
             db.session.add(dataset)
     db.session.commit()
 
