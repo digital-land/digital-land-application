@@ -248,7 +248,10 @@ class Record(DateModel):
 
     def to_dict(self):
         data = {}
-        for field in self.dataset.fields:
+        special_handling = ["organisation", "organisations"]
+        for field in [
+            f for f in self.dataset.fields if f.field not in special_handling
+        ]:
             attr = field.field.replace("-", "_")
             if hasattr(self, attr):
                 data[field.field] = getattr(self, attr)
@@ -256,6 +259,20 @@ class Record(DateModel):
                 data[field.field] = self.data.get(field.field)
             else:
                 data[field.field] = None
+        if self.organisation:
+            data["organisation"] = self.organisation.organisation
+        if self.organisations:
+            data["organisations"] = ";".join(
+                [org.organisation for org in self.organisations]
+            )
+
+        # check for related records from a dataset with a field with same
+        # name as the dataset as these will be references of the related record
+        related_data_fields = [field.field for field in self.dataset.fields]
+        for r in self.related_records:
+            if r.dataset_id in related_data_fields:
+                data[r.dataset_id] = r.reference
+
         return data
 
     def get(self, field):
