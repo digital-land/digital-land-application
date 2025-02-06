@@ -15,11 +15,13 @@ def make_reference(dataset, entity):
     return f"{dataset_prefix}-{entity}"
 
 
-def create_record(entity, validated_data, ds):
+def create_record(entity, validated_data, ds, reference=None):
+    if reference is None:
+        reference = make_reference(ds.dataset, entity)
     record = Record(
         entity=entity,
         dataset_id=ds.dataset,
-        reference=make_reference(ds.dataset, entity),
+        reference=reference,
     )
     return set_record_data(validated_data, record)
 

@@ -32,6 +32,11 @@ CATEGORY_VALUES_URL = (
     "https://dluhc-datasets.planning-data.dev/dataset/{category_reference}.json"
 )
 
+DATASETTE_SQL_QUERY = (
+    "SELECT * FROM entity WHERE json_extract(json, '$.{property}') = '{reference}'"
+)
+
+
 specification_cli = AppGroup("specification")
 
 
@@ -44,21 +49,23 @@ def _get_specification(specification):
 
 
 @specification_cli.command("seed-data")
-@click.argument("reference")
+@click.argument("specification")
 @click.option(
     "--max",
     default=100,
     type=click.IntRange(1, 100),
-    help="Maximum number of parent datasets to process (max 100)",
+    help="Maximum number of parent dataset records to load (max 100)",
 )
-def get_seed_data(reference, max):
-    print(f"Getting seed data for {reference}")
-    spec = Specification.query.get(reference)
+def get_seed_data(specification, max):
+    print(f"Getting seed data for {specification}")
+    spec = Specification.query.get(specification)
     if spec is None:
-        print(f"Specification {reference} not found")
+        print(f"Specification {specification} not found")
         return sys.exit(1)
 
     url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_limit={max}"
+    if spec.specification == "tree-preservation-order":
+        url = f"{url}&organisation_entity__not=67"  # exclude the Buckinghamshire Council - no tree data!
     data = _get(url)
     fields = [field.field for field in spec.parent_dataset.fields]
     for d in data:
@@ -69,9 +76,55 @@ def get_seed_data(reference, max):
                 load_data[k] = value
         model = RecordModel.from_data(load_data, spec.parent_dataset.fields)
         validated_data = model.model_dump(by_alias=True, exclude={"fields": True})
-        record = create_record(d["entity"], validated_data, spec.parent_dataset)
+        reference = d.get("reference", None)
+        record = create_record(
+            d["entity"], validated_data, spec.parent_dataset, reference=reference
+        )
         db.session.add(record)
     db.session.commit()
+
+    references = [
+        {"dataset": d["dataset"], "reference": d["reference"], "entity": d["entity"]}
+        for d in data
+    ]
+
+    for dataset in spec.parent_dataset.children:
+        print(f"Getting seed data for dependent dataset {dataset.dataset}")
+        fields = [field.field for field in dataset.fields]
+        for reference in references:
+            sql = DATASETTE_SQL_QUERY.format(
+                property=spec.parent_dataset.dataset, reference=reference["reference"]
+            )
+            query = f"{DATASETTE_URL}/{dataset.dataset}.json?sql={sql}&_shape=array"
+            dependent_data = _get(query)
+            owning_record = Record.query.get(
+                (reference["entity"], reference["dataset"])
+            )
+            if owning_record is None:
+                print(
+                    f"No owning record found for {reference['dataset']} record {reference['reference']}"
+                )
+                continue
+            for dd in dependent_data:
+                load_data = {}
+                for key, value in dd.items():
+                    k = key.replace("_", "-")
+                    if k in fields:
+                        load_data[k] = value
+                model = RecordModel.from_data(load_data, dataset.fields)
+                validated_data = model.model_dump(
+                    by_alias=True, exclude={"fields": True}
+                )
+                reference = dd.get("reference", None)
+                dependent_record = create_record(
+                    dd["entity"], validated_data, dataset, reference=reference
+                )
+                dependent_record.owning_record = owning_record
+                db.session.add(dependent_record)
+                print(
+                    f"Added dependent {dataset.dataset} record {dependent_record.reference}"
+                )
+        db.session.commit()
 
 
 @specification_cli.command("init")
