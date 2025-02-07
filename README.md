@@ -34,12 +34,14 @@ If/when model classes are added, create database migrations:
 
     flask db upgrade
 
+3. Run the application
 
-3. Run the app
+Use flask run to start the application.
 
     flask run
 
 and have a look at http://localhost:5000
+
 
 
 #### Initial application for a given specification
