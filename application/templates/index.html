@@ -21,7 +21,7 @@
         <h2 class="govuk-heading-m">Datasets in this specification</h2>
         <p class="govuk-body">The following datasets make up the <a href="https://digital-land.github.io/specification/specification/{{specification.specification}}/" class="govuk-link">{{ specification.name }}</a> specification</p>
         <ol class="govuk-list govuk-list--number">
-          {% for dataset in specification.datasets %}
+          {% for dataset in specification.ordered_datasets %}
             <li><a href="{{ url_for('dataset.dataset', dataset=dataset.dataset) }}" class="govuk-link">{{ dataset.name | capitalize }}</a></li>
           {% endfor %}
         </ol>
