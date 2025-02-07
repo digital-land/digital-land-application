@@ -56,5 +56,6 @@ If you need to specify which dataset should be the parent dataset and entry poin
 
 #### Importing data from digital land datasette
 
+Assuming that there's a specification in the database, you can import data from the digital land datasette using the following command.
 
-     flask specification seed-data [specification name]
+     flask specification seed-data

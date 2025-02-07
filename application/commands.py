@@ -49,19 +49,20 @@ def _get_specification(specification):
 
 
 @specification_cli.command("seed-data")
-@click.argument("specification")
 @click.option(
     "--max",
     default=100,
     type=click.IntRange(1, 100),
     help="Maximum number of parent dataset records to load (max 100)",
 )
-def get_seed_data(specification, max):
-    print(f"Getting seed data for {specification}")
-    spec = Specification.query.get(specification)
+def get_seed_data(max):
+    print(f"Getting seed data for {max} records")
+    # There's only one specification in db at a time for now
+    spec = Specification.query.first()
     if spec is None:
-        print(f"Specification {specification} not found")
+        print("No specification found")
         return sys.exit(1)
+    print(f"Getting seed data for {spec.specification}")
 
     url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_limit={max}"
     if spec.specification == "tree-preservation-order":
