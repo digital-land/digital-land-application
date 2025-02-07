@@ -34,9 +34,11 @@
                                     {{ record.organisation.name }}
                                 {% else %}
                                     {% set value = record.get(field.field) %}
-                                    {% if value is not none %}
+                                    {% if value %}
                                         {% if record.dataset.parent_dataset and field.field == record.dataset.parent_dataset.dataset and record.owning_record  %}
                                             <a href="{{url_for('dataset.record', entity=record.owning_record.entity, dataset=record.dataset.parent_dataset.dataset)}}" class="govuk-link">{{ record.owning_record.entity }}</a>
+                                        {% elif "url" in field.field %}
+                                            <a href="{{ value }}" class="govuk-link">{{ value }}</a>
                                         {% elif value is string %}
                                             {{ value }}
                                         {% elif value is sequence and value is not string %}
@@ -92,7 +94,9 @@
                                         {% else %}
                                             {% set value = r.get(field.field) %}
                                             {% if value is not none %}
-                                                {% if value is string %}
+                                                {% if "url" in field.field %}
+                                                    <a href="{{ value }}" class="govuk-link">{{ value }}</a>
+                                                {% elif value is string %}
                                                     {{ value }}
                                                 {% elif value is sequence and value is not string %}
                                                     <ul class="govuk-list">

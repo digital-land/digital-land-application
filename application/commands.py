@@ -69,11 +69,7 @@ def get_seed_data(specification, max):
     data = _get(url)
     fields = [field.field for field in spec.parent_dataset.fields]
     for d in data:
-        load_data = {}
-        for key, value in d.items():
-            k = key.replace("_", "-")
-            if k in fields:
-                load_data[k] = value
+        load_data = extract_load_data(d, fields)
         model = RecordModel.from_data(load_data, spec.parent_dataset.fields)
         validated_data = model.model_dump(by_alias=True, exclude={"fields": True})
         reference = d.get("reference", None)
@@ -106,11 +102,7 @@ def get_seed_data(specification, max):
                 )
                 continue
             for dd in dependent_data:
-                load_data = {}
-                for key, value in dd.items():
-                    k = key.replace("_", "-")
-                    if k in fields:
-                        load_data[k] = value
+                load_data = extract_load_data(dd, fields)
                 model = RecordModel.from_data(load_data, dataset.fields)
                 validated_data = model.model_dump(
                     by_alias=True, exclude={"fields": True}
@@ -160,12 +152,12 @@ def init_specification(reference, parent):
 
         # If we get here, commit the transaction
         db.session.commit()
-        print("Successfully imported specification data")
+        print(f"Successfully initialised specification {reference}")
 
     except Exception as e:
         # If anything fails, rollback the transaction
         db.session.rollback()
-        print(f"Error importing specification data: {str(e)}")
+        print(f"Error importing specification {reference}: {str(e)}")
         return sys.exit(1)
 
 
@@ -390,3 +382,21 @@ def _import_organisations():
         )
         db.session.add(org)
     db.session.commit()
+
+
+def extract_load_data(data, fields):
+    load_data = {}
+    for key, value in data.items():
+        k = key.replace("_", "-")
+        if k in fields:
+            load_data[k] = value
+    if "json" in data and data.get("json", None) is not None:
+        try:
+            json_data = json.loads(data["json"])
+            for key, value in json_data.items():
+                k = key.replace("_", "-")
+                if k in fields:
+                    load_data[k] = value
+        except json.JSONDecodeError:
+            print("Warning: Failed to parse JSON data for record")
+    return load_data
