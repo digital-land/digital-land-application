@@ -40,11 +40,9 @@ Use flask run to start the application.
 
     flask run
 
-and have a look at http://localhost:5000
 
 
-
-#### Initial application for a given specification
+#### Initialise application for a given specification
 
 Setup the intial data for running this application.
 
