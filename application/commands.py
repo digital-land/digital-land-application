@@ -32,9 +32,11 @@ CATEGORY_VALUES_URL = (
     "https://dluhc-datasets.planning-data.dev/dataset/{category_reference}.json"
 )
 
-DATASETTE_SQL_QUERY = (
-    "SELECT * FROM entity WHERE json_extract(json, '$.{property}') = '{reference}'"
-)
+DATASETTE_SQL_QUERY = """
+SELECT * FROM entity
+WHERE json_extract(json, '$.{property}') = '{reference}'
+AND organisation_entity = {organisation_entity}
+"""
 
 
 specification_cli = AppGroup("specification")
@@ -77,6 +79,13 @@ def get_seed_data(max):
         record = create_record(
             d["entity"], validated_data, spec.parent_dataset, reference=reference
         )
+        organisation_entity = d.get("organisation_entity", None)
+        if organisation_entity is not None:
+            org = Organisation.query.filter(
+                Organisation.entity == organisation_entity
+            ).one_or_none()
+            if org is not None:
+                record.organisation_id = org.organisation
         db.session.add(record)
     db.session.commit()
 
@@ -89,11 +98,6 @@ def get_seed_data(max):
         print(f"Getting seed data for dependent dataset {dataset.dataset}")
         fields = [field.field for field in dataset.fields]
         for reference in references:
-            sql = DATASETTE_SQL_QUERY.format(
-                property=spec.parent_dataset.dataset, reference=reference["reference"]
-            )
-            query = f"{DATASETTE_URL}/{dataset.dataset}.json?sql={sql}&_shape=array"
-            dependent_data = _get(query)
             owning_record = Record.query.get(
                 (reference["entity"], reference["dataset"])
             )
@@ -102,6 +106,13 @@ def get_seed_data(max):
                     f"No owning record found for {reference['dataset']} record {reference['reference']}"
                 )
                 continue
+            sql = DATASETTE_SQL_QUERY.format(
+                property=spec.parent_dataset.dataset,
+                reference=reference["reference"],
+                organisation_entity=owning_record.organisation.entity,
+            )
+            query = f"{DATASETTE_URL}/{dataset.dataset}.json?sql={sql}&_shape=array"
+            dependent_data = _get(query)
             for dd in dependent_data:
                 load_data = extract_load_data(dd, fields)
                 model = RecordModel.from_data(load_data, dataset.fields)
@@ -380,6 +391,7 @@ def _import_organisations():
             organisation=organisation["organisation"],
             name=organisation["name"],
             local_authority_type=la_type,
+            entity=organisation["entity"],
         )
         db.session.add(org)
     db.session.commit()

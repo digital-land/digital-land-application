@@ -45,7 +45,7 @@ class Organisation(DateModel):
     organisation: Mapped[str] = mapped_column(Text, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
     local_authority_type: Mapped[Optional[str]] = mapped_column(Text)
-
+    entity: Mapped[int] = mapped_column(db.BigInteger)
     __table_args__ = (db.PrimaryKeyConstraint("organisation", name="pk_organisation"),)
 
 
