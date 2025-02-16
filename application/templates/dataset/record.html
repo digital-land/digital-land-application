@@ -6,7 +6,7 @@
 <h1 class="govuk-heading-l">{{ record.reference }}</h1>
 
 <div class="govuk-grid-row">
-    <div class="govuk-grid-column-three-quarters">
+    <div class="govuk-grid-column-two-thirds">
         <section class="app-summary-card{{ ' app-summary-card--parent app-summary-card--parent-full' if record.dataset.parent_dataset is none }}">
             <header class="app-summary-card__header">
                 <h2 class="app-summary-card__title">
@@ -58,18 +58,38 @@
                 </dl>
             </div>
         </section>
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--invisible">
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+    </div>
+    <div class="govuk-grid-column-one-third">
+    {% if record.dataset.parent_dataset is none %}
+
+      <div class="app-related-items" role="complementary">
+        <h2 class="govuk-heading-s govuk-!-margin-bottom-0" id="view-the-data">
+          Linked data
+        </h2>
+        <p class="govuk-hint govuk-!-font-size-14">View data link to this record</p>
+        <nav role="navigation" aria-labelledby="view-the-data">
+          <ul class="govuk-list govuk-!-font-size-16">
+            {% for related_dataset in record.dataset.children  %}
+            <li>
+              <a class="govuk-link"
+                href="#{{ related_dataset.dataset }}">{{ related_dataset.name }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
     </div>
 </div>
-
-<hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
 <!-- if this record.dataset.parent_dataset is none then it is a top level dataset and has children so iterate over them -->
 {% if record.dataset.parent_dataset is none %}
     {% for related_dataset in record.dataset.children  %}
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-three-quarters">
-                <h2 class="govuk-heading-m">{{ related_dataset.name | capitalize }}</h2>
+                <h2 class="govuk-heading-m" id="{{ related_dataset.dataset }}">{{ related_dataset.name | capitalize }}</h2>
+                <p class="govuk-body">These {{ related_dataset.name }} records are linked to the {{ record.dataset.name }} record above.</p>
                 {% for r in record.get_related_by_dataset(related_dataset.dataset) %}
                     <section class="app-summary-card">
                         <header class="app-summary-card__header">
