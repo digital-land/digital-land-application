@@ -7,7 +7,7 @@
 
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-three-quarters">
-        <section class="app-summary-card">
+        <section class="app-summary-card{{ ' app-summary-card--parent app-summary-card--parent-full' if record.dataset.parent_dataset is none }}">
             <header class="app-summary-card__header">
                 <h2 class="app-summary-card__title">
                    {{ record.dataset.name | capitalize }}
@@ -61,6 +61,9 @@
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--invisible">
     </div>
 </div>
+
+<hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
 <!-- if this record.dataset.parent_dataset is none then it is a top level dataset and has children so iterate over them -->
 {% if record.dataset.parent_dataset is none %}
     {% for related_dataset in record.dataset.children  %}
