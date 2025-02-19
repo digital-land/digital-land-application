@@ -7,6 +7,21 @@
 
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+
+      {% if record.dataset.parent_dataset %}
+      {% set parent_record = record.owning_record %}
+      <section class="app-summary-card govuk-!-margin-bottom-9 app-summary-card--parent">
+        <header class="app-summary-card__header">
+          <h2 class="app-summary-card__title">
+            Linked from
+          </h2>
+        </header>
+        <div class="app-summary-card__body">
+          <p class="govuk-body govuk-!-margin-bottom-0">This record is linked from the <a href="{{ url_for('dataset.record', dataset=parent_record.dataset.dataset, entity=parent_record.entity) }}" class="govuk-link">{{ record.owning_record.reference }}{{ " - " + record.owning_record.name if record.owning_record.name }}</a> {{ record.dataset.parent_dataset.name }} record.</p>
+        </div>
+      </section>
+      {% endif %}
+
         <section class="app-summary-card{{ ' app-summary-card--parent app-summary-card--parent-full' if record.dataset.parent_dataset is none }}">
             <header class="app-summary-card__header">
                 <h2 class="app-summary-card__title">
