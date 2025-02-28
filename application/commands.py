@@ -55,7 +55,10 @@ def _get_specification(specification):
     type=click.IntRange(1, 500),
     help="Number of parent dataset records to load (max 500)",
 )
-def get_seed_data(size):
+@click.option(
+    "--organisation", default=None, help="Only records from the given organisation"
+)
+def get_seed_data(size, organisation):
     print(f"Getting seed data for {size} records")
     # There's only one specification in db at a time for now
     spec = Specification.query.first()
@@ -64,11 +67,36 @@ def get_seed_data(size):
         return sys.exit(1)
     print(f"Getting seed data for {spec.specification}")
 
+    if organisation is not None:
+        org = Organisation.query.filter(
+            Organisation.organisation == organisation
+        ).one_or_none()
+        if org is None:
+            print(f"Organisation {organisation} not found")
+            return sys.exit(1)
+        organisation_entity = org.entity
+    else:
+        organisation_entity = None
+
     url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_size={size}"
     if spec.specification == "tree-preservation-order":
+        if organisation_entity is not None and organisation_entity != "67":
+            print(
+                f"Organisation {organisation} is not a tree preservation order authority"
+            )
+            return sys.exit(1)
         url = f"{url}&organisation_entity__not=67"  # exclude the Buckinghamshire Council - no tree data!
+
+    if organisation_entity is not None:
+        url = f"{url}&organisation_entity__exact={organisation_entity}"
+
     data = _get(url)
     fields = [field.field for field in spec.parent_dataset.fields]
+
+    if len(data) == 0:
+        print(f"No data found for {spec.parent_dataset.dataset}")
+        return sys.exit(1)
+
     for d in data:
         load_data = extract_load_data(d, fields)
         try:
