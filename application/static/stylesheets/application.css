@@ -10209,6 +10209,25 @@ p + .govuk-heading-s,
     display: none;
   }
 }
+.app-summary-card--parent {
+  --box-primary-colour: #5694ca;
+  --box-secondary-colour: #f3f2f1;
+  border-color: var(--box-primary-colour);
+}
+.app-summary-card--parent .app-summary-card__header {
+  background: var(--box-primary-colour);
+}
+.app-summary-card--parent .app-summary-card__title {
+  color: var(--box-secondary-colour);
+}
+.app-summary-card--parent .app-summary-card__body {
+  background: var(--box-secondary-colour);
+}
+
+.app-summary-card--parent-full {
+  --box-secondary-colour: #ffffff;
+}
+
 .app-register-table th {
   --header-background-colour: #1d70b8;
   --header-text-colour: #ffffff;

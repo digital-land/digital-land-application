@@ -38,7 +38,7 @@ class RecordModel(BaseModel):
         alias_generator=lambda x: x.replace("_", "-"),
         populate_by_name=True,
     )
-    name: str
+    name: Optional[str]
     description: Optional[str]
     notes: Optional[str]
     data: dict[str, Any]

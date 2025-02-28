@@ -204,11 +204,11 @@ class Record(DateModel):
     dataset_id: Mapped[str] = mapped_column(
         ForeignKey("dataset.dataset"), primary_key=True
     )
-    name: Mapped[str] = mapped_column(Text)
-    reference: Mapped[str] = mapped_column(Text)
+    name: Mapped[Optional[str]] = mapped_column(Text)
+    reference: Mapped[Optional[str]] = mapped_column(Text)
     description: Mapped[Optional[str]] = mapped_column(Text)
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    data: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSONB))
+    data: Mapped[Optional[dict]] = mapped_column(MutableDict.as_mutable(JSONB))
     organisation_id: Mapped[Optional[Organisation]] = mapped_column(
         ForeignKey("organisation.organisation", name="fk_organisation_record"),
         nullable=True,

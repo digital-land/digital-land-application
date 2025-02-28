@@ -28,9 +28,7 @@ SPECIFICATION_QUERY = (
 )
 FIELDS_URL = f"{DIGTAL_LAND_DB_URL}/field.json?_shape=array"
 CATEGORY_DATASETS_URL = f"{DIGTAL_LAND_DB_URL}/dataset.json?end_date__isblank=1&typology__exact=category&_shape=array"
-CATEGORY_VALUES_URL = (
-    "https://dluhc-datasets.planning-data.dev/dataset/{category_reference}.json"
-)
+CATEGORY_VALUES_URL = "https://dataset-editor.development.planning.data.gov.uk/dataset/{category_reference}.json"
 
 DATASETTE_SQL_QUERY = """
 SELECT * FROM entity
@@ -54,8 +52,8 @@ def _get_specification(specification):
 @click.option(
     "--max",
     default=100,
-    type=click.IntRange(1, 100),
-    help="Maximum number of parent dataset records to load (max 100)",
+    type=click.IntRange(1, 500),
+    help="Maximum number of parent dataset records to load (max 500)",
 )
 def get_seed_data(max):
     print(f"Getting seed data for {max} records")
@@ -73,20 +71,23 @@ def get_seed_data(max):
     fields = [field.field for field in spec.parent_dataset.fields]
     for d in data:
         load_data = extract_load_data(d, fields)
-        model = RecordModel.from_data(load_data, spec.parent_dataset.fields)
-        validated_data = model.model_dump(by_alias=True, exclude={"fields": True})
-        reference = d.get("reference", None)
-        record = create_record(
-            d["entity"], validated_data, spec.parent_dataset, reference=reference
-        )
-        organisation_entity = d.get("organisation_entity", None)
-        if organisation_entity is not None:
-            org = Organisation.query.filter(
-                Organisation.entity == organisation_entity
-            ).one_or_none()
-            if org is not None:
-                record.organisation_id = org.organisation
-        db.session.add(record)
+        try:
+            model = RecordModel.from_data(load_data, spec.parent_dataset.fields)
+            validated_data = model.model_dump(by_alias=True, exclude={"fields": True})
+            reference = d.get("reference", None)
+            record = create_record(
+                d["entity"], validated_data, spec.parent_dataset, reference=reference
+            )
+            organisation_entity = d.get("organisation_entity", None)
+            if organisation_entity is not None:
+                org = Organisation.query.filter(
+                    Organisation.entity == organisation_entity
+                ).one_or_none()
+                if org is not None:
+                    record.organisation_id = org.organisation
+                db.session.add(record)
+        except Exception as e:
+            print(f"Error creating record: {e}")
     db.session.commit()
 
     references = [
@@ -173,9 +174,9 @@ def init_specification(reference, parent):
         return sys.exit(1)
 
 
-@specification_cli.command("clear")
-def clear_data():
-    print("Clearing data")
+@specification_cli.command("clear-all")
+def clear_all_data():
+    print("Clearing all data")
 
     # Drop sequences for each dataset
     for dataset in Dataset.query.all():
@@ -191,6 +192,14 @@ def clear_data():
     db.session.query(Dataset).delete()
     db.session.query(Specification).delete()
     db.session.query(Organisation).delete()
+    db.session.commit()
+
+
+@specification_cli.command("clear-seed-data")
+def clear_seed_data():
+    print("Clearing seed data")
+
+    db.session.query(Record).delete()
     db.session.commit()
 
 
@@ -315,7 +324,10 @@ def _get_and_import_category_values():
             print(f"No records found for {reference}")
             continue
         for record in category_values["records"]:
-            if record["end-date"] != "":
+            if (
+                record.get("end-date", None) is not None
+                and record.get("end_date") != ""
+            ):
                 continue
             if "prefix" not in record or record["prefix"] == "":
                 print(f"No prefix found for {reference}")
