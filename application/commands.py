@@ -50,13 +50,13 @@ def _get_specification(specification):
 
 @specification_cli.command("seed-data")
 @click.option(
-    "--max",
+    "--size",
     default=100,
     type=click.IntRange(1, 500),
-    help="Maximum number of parent dataset records to load (max 500)",
+    help="Number of parent dataset records to load (max 500)",
 )
-def get_seed_data(max):
-    print(f"Getting seed data for {max} records")
+def get_seed_data(size):
+    print(f"Getting seed data for {size} records")
     # There's only one specification in db at a time for now
     spec = Specification.query.first()
     if spec is None:
@@ -64,7 +64,7 @@ def get_seed_data(max):
         return sys.exit(1)
     print(f"Getting seed data for {spec.specification}")
 
-    url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_limit={max}"
+    url = f"{DATASETTE_URL}/{spec.parent_dataset.dataset}/entity.json?_shape=array&_size={size}"
     if spec.specification == "tree-preservation-order":
         url = f"{url}&organisation_entity__not=67"  # exclude the Buckinghamshire Council - no tree data!
     data = _get(url)
@@ -221,7 +221,7 @@ def _get(url):
         return response.json()
     except requests.exceptions.HTTPError as e:
         print(f"Error getting {url}: {e}")
-        return None
+        return []
 
 
 def _import_specification_datasets(reference, data, name):
