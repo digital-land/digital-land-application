@@ -41,7 +41,6 @@ Use flask run to start the application.
     flask run
 
 
-
 #### Initialise application for a given specification
 
 Setup the intial data for running this application.
@@ -59,3 +58,16 @@ If you need to specify which dataset should be the parent dataset and entry poin
 Assuming that there's a specification in the database, you can import data from the digital land datasette using the following command.
 
      flask specification seed-data
+
+By default this command loads 100 records of the main (parent) dataset and any dependent datasets records that are
+found in Digital land datasette.
+
+That number of parent records can be modified using the --max flag
+
+
+     flask specification seed-data --max [up to a maximum of 500]
+
+In addition you can restrict the load of seed data to records from a specific organisation using the organisation
+curie. For example to load records from Camden:
+
+    flask specification seed-data --organisation local-authority:LBH
