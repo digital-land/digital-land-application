@@ -167,7 +167,10 @@ def init_specification(reference, parent):
     spec = Specification.query.all()
     if len(spec) > 0:
         print(
-            "A specification has already been imported. Another one can't be imported."
+            "A specification has already been imported\n\n"
+            "If you want to import a new specification, you need to clear the existing one first.\n\n"
+            "You can do this with the 'specification clear-all' command.\n\n"
+            "** Download any exising data first as you won't be able to recover it once the data is deleted. **"
         )
         return sys.exit(1)
 
