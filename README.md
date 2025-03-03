@@ -62,10 +62,10 @@ Assuming that there's a specification in the database, you can import data from 
 By default this command loads 100 records of the main (parent) dataset and any dependent datasets records that are
 found in Digital land datasette.
 
-That number of parent records can be modified using the --max flag
+That number of parent records can be modified using the --size flag
 
 
-     flask specification seed-data --max [up to a maximum of 500]
+     flask specification seed-data --size [up to a maximum of 500]
 
 In addition you can restrict the load of seed data to records from a specific organisation using the organisation
 curie. For example to load records from Camden:
