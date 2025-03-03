@@ -76,6 +76,10 @@ class Specification(DateModel):
             ds.append(dataset)
         return ds
 
+    @property
+    def has_data(self):
+        return any(dataset.records for dataset in self.datasets)
+
 
 class Dataset(DateModel):
     __tablename__ = "dataset"

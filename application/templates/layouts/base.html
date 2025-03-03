@@ -158,15 +158,16 @@
   <div class="govuk-width-container">
     <div class="govuk-footer__meta">
       <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
-        {% if AUTHENTICATED %}
-          <h2 class="govuk-visually-hidden">Admin links</h2>
+        <h2 class="govuk-visually-hidden">Download</h2>
+          {% if specification and specification.has_data or dataset and dataset.records %}
           <ul class="govuk-footer__inline-list">
             <li class="govuk-footer__inline-list-item">
-              <a class="govuk-footer__link" href="#">
-                Something
+              <a class="govuk-footer__link" href="{{ url_for('main.download_all') }}">
+                Download data
               </a>
             </li>
           </ul>
+        <hr class="govuk-section-break govuk-section-break--invisible govuk-section-break--m">
         {% endif %}
         <div class="govuk-footer__meta-custom">
           The <a class="govuk-footer__link" href="https://github.com/digital-land/digital-land/">software</a> and <a class="govuk-footer__link" href="https://github.com/digital-land/digital-land/">data</a> used to build these pages is <a class="govuk-footer__link" href="https://github.com/digital-land/digital-land/blob/master/LICENSE">open source</a>.
